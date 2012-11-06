@@ -1,0 +1,10 @@
+#PBS -q class
+#PBS -l nodes=3:fourcore
+#PBS -l walltime=02:00:00
+#PBS -N haughty
+
+export PATH=$PATH:/opt/cuda-4.0/cuda/bin/ 
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/cuda-4.0/cuda/lib64/:/opt/cuda-4.0/cuda/lib/ 
+
+MPI_MCA_mpi_yield_when_idle=0
+/usr/lib64/openmpi/bin/mpirun --hostfile $PBS_NODEFILE -np 64 ./Project/TSP

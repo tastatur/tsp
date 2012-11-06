@@ -1,0 +1,13 @@
+Experiments 
+
+	Vary initial population size
+	Vary number of nodes
+	Vary CUDA/OpenMP threads
+	Vary total numbver of iterations (both global and local)
+
+	Algorithms used : Kernighan Lin Algorithm , K Tournament Selection
+
+
+Step 1 - Use heuristic for tour generation preferably k Nearest neighbor using OpenMP
+	
+
