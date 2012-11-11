@@ -4,8 +4,8 @@
 
 void printTour(int *t);
 void CheckValidity(int *tour);
-void GenerateTour(int initialCity, int* tourPointer, float** dMat);
 int GetNearestCity(int currCity, float** dMat, int* visited);
+void GenerateTour(int initialCity, int* tourPointer, float** dMat);
 
 void GenerateInitPopulation(float** dMat)
 {
@@ -14,15 +14,6 @@ void GenerateInitPopulation(float** dMat)
   int **initialPopulation = (int **)malloc(sizeof(int *) * NUM_CITIES);
   for(i = 0; i < NUM_CITIES; i++)
     initialPopulation[i] = (int *)malloc(sizeof(int) * NUM_CITIES);
-
-  /* for(i = 0; i < NUM_CITIES; i++) */
-  /* { */
-  /*   for(j =0 ; j < NUM_CITIES; j++) */
-  /*   { */
-  /*     if(dMat[i][j] == 0) */
-  /* 	printf("Zero at %d %d\n",i,j); */
-  /*   } */
-  /* } */
 
   for(city = 0; city < NUM_CITIES; city++)
   {
@@ -73,9 +64,6 @@ int GetNearestCity(int currCity, float** dMat, int* visited)
   float distance = 100000000000;
   for(i = 0 ; i < NUM_CITIES; i++)
   {
-    /* if(dMat[currCity][i] == 0) */
-    /*   printf("zero at %d %d\n", currCity, i); */
-
     if(dMat[currCity][i] < distance && visited[i] == 0)
     {
       distance = dMat[currCity][i];
@@ -86,7 +74,6 @@ int GetNearestCity(int currCity, float** dMat, int* visited)
   if(nextCity == INVALID)
   {
     printf("ERROR:(GlobalPopGen1)Problem in tour generation\n");
-    printf("Cannot get nextcity for startnode");
     exit(0);    
   }
   return nextCity;
