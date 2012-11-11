@@ -92,7 +92,7 @@ for ( i = 0 ; i<NUM_CITY ; i++) {
 }
 }
 
-int main()
+/*int main()
 {
 float **TSP;
 int i,j;
@@ -101,7 +101,7 @@ TSP = (float**)malloc(sizeof(float*)*50);
 for ( j =0 ; j< 50 ; j++)
 	TSP[j] = (float*)malloc(sizeof(float)*50);
 readDataFromFile(path,TSP);
-}
+}*/
 
 /*open file in path - calculate length of file / number of cities - malloc size of 2D array - read file line by line - enter co-ordinates into array */
 
