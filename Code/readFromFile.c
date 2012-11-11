@@ -63,7 +63,11 @@ int ** readActualPath(char *path)
 
 int ** make2DArray(int **TSPData , int TSPData[][], int NUM_CITY)
 {
-
+int k = 0;
+for ( int i=0 ; i<NUM_CITY ; i++)
+	{
+		TSPData[k][i] = TSPData_values[counter];
+	}
 
 }
 
