@@ -1,8 +1,11 @@
 
 /* Global Variables */
-char *pathName
+#define NUM_CITIES 48                                 // Number of cities
+typedef int tour[NUM_CITIES];                         // tour data structure
+typedef float distanceMatrix[NUM_CITIES][NUM_CITIES]; // Matrix holding the distance
 
-const int numCity = 48;
+char *pathName;
+
 const int numOpenMPthreads_citypaths = 10;
 const int numMPINodes = 10;
 const int numOpenMPThreadsPerMPINode = 10;
