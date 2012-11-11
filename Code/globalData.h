@@ -1,3 +1,6 @@
+#ifndef _GLOBAL_H
+#define _GLOBAL_H
+
 
 /* Global Variables */
 #define NUM_CITIES 48                                 // Number of cities
@@ -6,13 +9,15 @@ typedef float distanceMatrix[NUM_CITIES][NUM_CITIES]; // Matrix holding the dist
 
 char *pathName;
 
-const int numOpenMPthreads_citypaths = 10;
-const int numMPINodes = 10;
-const int numOpenMPThreadsPerMPINode = 10;
-const int numberOfDivisions = 4;
-const int cudaThreadBlocks = 4;
-const int cudaThreadsPerBlock = 16;
+#define numOpenMPthreads_citypaths 10
+#define numMPINodes 10
+#define numOpenMPThreadsPerMPINode 10
+#define numberOfDivisions  4
+#define cudaThreadBlocks = 4
+#define cudaThreadsPerBlock = 16
 
+/******** ERROR CODES *********/
 
+#define INVALID -1
 
-
+#endif /* _GLOBAL_H */
