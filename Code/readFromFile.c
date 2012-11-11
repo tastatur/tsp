@@ -12,7 +12,7 @@ int ** readDataFromFile(char *path,float **TSPData)
 	//int *TSPData_values;
 	int NUM_CITY = 0,counter = 0,num , i;
 	char ch;
-	strcpy(path , "/home/nishith/hppc/trunk/Code/TSP48.txt");
+	strcpy(path , pathString);
 
 	FILE *fin = fopen(path, "r");
 	int **TSPData_values;
@@ -84,15 +84,15 @@ int ** make2DArray(float **TSPData , int **TSPData_values, int NUM_CITY)
 int k , i;
 for ( k = 0 ; k < NUM_CITY ; k++) {
 
-for ( i=0 ; i<NUM_CITY ; i++) {
+for ( i = 0 ; i<NUM_CITY ; i++) {
 		TSPData[k][i] = (((float)pow((TSPData_values[k][2] - TSPData_values[i][2]),2) + (float)pow((TSPData_values[k][1] - TSPData_values[i][1]),2)));
-//	printf("%f",TSPData[k][i]);
+//	printf("%f \t",TSPData[k][i]);
 	}
 //	printf("\n");
 }
 }
 
-/*int main()
+int main()
 {
 float **TSP;
 int i,j;
@@ -101,7 +101,7 @@ TSP = (float**)malloc(sizeof(float*)*50);
 for ( j =0 ; j< 50 ; j++)
 	TSP[j] = (float*)malloc(sizeof(float)*50);
 readDataFromFile(path,TSP);
-}*/
+}
 
 /*open file in path - calculate length of file / number of cities - malloc size of 2D array - read file line by line - enter co-ordinates into array */
 
