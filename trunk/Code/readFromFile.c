@@ -56,7 +56,7 @@ int ** readDataFromFile(char *path,float **TSPData)
 
                 fclose(fin);
 	make2DArray(TSPData , TSPData_values , NUM_CITY);
-
+return TSPData_values;
 }
 
 void readActualPath(char *path, int* correctPath)
