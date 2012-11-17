@@ -19,6 +19,8 @@ char *pathName;
 #define numberOfDivisions  4
 #define cudaThreadBlocks = 4
 #define cudaThreadsPerBlock = 16
+#define globalIter 1
+#define localIter 1
 
 /******** ERROR CODES *********/
 
