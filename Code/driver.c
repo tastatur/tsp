@@ -6,39 +6,105 @@
 #include<mpi.h>
 #endif
 
-void main()
+/** Generates number of tours each node should handle 
+*   ith ranked node will handle tours from index tourCountOnNode[i-1]  to tourCountOnNode[i] - 1
+**/
+void findTourCountForNode(int *tourCountOnNode){
+	int i , tempCityCount = NUM_CITIES;
+	int quot;
+
+	quot = (int)Math.ceil((float)tempCityCount/(numMPINodes - 1));
+	tourCountOnNode[0] = quot;
+	tempCityCount -= quot ;
+	 
+	for (i = 1 ; i < numMPINODES - 1 ; i++)
+	{
+		quot = (int)Math.ceil((float)tempCityCount/(numMPINodes - i - 1));
+		tourCountOnNode[i] = quot + tourCountOnNode[i-1]);
+		tempCityCount -= quot;
+	}	
+}
+void main(int argc , char *argv)
 {
-  int i,j;
-  float **dMat;
-  int **TSPData_coordinates;
-  char *path = (char *)malloc(sizeof(char) * 100);
+	int i, tourCountOnNode[numMPINodes-1], rowPerProc, startRow , gIter , lIter;
+  	float **dMat;
+  	int **TSPData_coordinatntes;
+  	char *path = (char *)malloc(sizeof(char) * pathLen);
 
-  	int NUM_CITY = 0 , num , counter = 0 , size , iLoop, jLoop;
-        char ch;
-
-        // Initialize the MPI communicator
-        int  rank, rc;
-        int temp , randA , randB , FLAG;
-        int localGlobalIter = 0;
-        double start , stop;
+        /* Initialize the MPI communication world */
+        int  rank, size;
         MPI_Status status;
 
-        MPI_Init(&argc,&argv);
+        MPI_Init(&argc, &argv);
         MPI_Comm_size(MPI_COMM_WORLD,&size);
         MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-        start = MPI_Wtime();
 
-  dMat = (float **)malloc(sizeof(float *) * NUM_CITIES);
-  for(i = 0 ; i < NUM_CITIES; i++)
-    dMat[i] = (float *)malloc(sizeof(float) * NUM_CITIES);
+	/* Initialize the data matrix */
+	int **initialPopulation;
+	dMat = (float **)malloc(sizeof(float *) * NUM_CITIES);
+  	for(i = 0 ; i < NUM_CITIES; i++)
+    		dMat[i] = (float *)malloc(sizeof(float) * NUM_CITIES);
+	
+	/* Find tour count handled by each mpi node */
+	findTourCountForNode(tourCountOnNode);
+			
+  	if(rank == 0){
+		/* Read the TSP City coordinates and populate the distance matrix */
+  		TSPData_coordinates = readDataFromFile(path, dMat);
+		
+		/* Generate a global population using Nearest Neighbor algorithm */
+  		initialPopulation = GenerateInitPopulation(dMat);
+		
+		/* Brodcast the distance matrix */
+		MPI_Bcast(dMat , NUM_CITIES * NUM_CITIES , MPI_FLOAT, 0,  MPI_COMM_WORLD);	
 
+		/******************************* This will be executed on MASTER for fixed number of global iterations ****************/
+		for (gIter = 0 ; gIter < globalIter ; gIter++){
 
-  if(rank == 0){
-  TSPData_coordinates = readDataFromFile(path, dMat);
-  GenerateInitPopulation(dMat);
-  resultVerification(TSPData_coordinates);
-}
-          MPI_Finalize();
-return;
+			/* Distribute this global population across all MPI nodes */
+			for (i = 0 ; i < size - 1 ; i++){
+				rowPerProc = (i == 0) ? tourCountOnNode[i] : (tourCountOnNode[i] - tourCountOnNode[i-1]);
+				startRow = (i == 0) ? 0 : tourCountOnNode[i - 1];
+				MPI_Send(initialPopulation[startRow] , rowPerProc * NUM_CITIES , MPI_INT, i + 1 , 1 , MPI_COMM_WORLD);
+			}
+			
+			/* Wait to receive the best tour from all worker MPI nodes */
+	
+			/* Now improve these tours to generate a global population of improved tours */
+		}
+		/************************************************************************************************************/		
+
+		/* At last we have the most optimized tour */
+  		resultVerification(TSPData_coordinates);
+	}
+	else {
+		/******************************* This will be executed on WORKERS for fixed number of global iterations ****************/
+		for (gIter = 0 ; gIter < globalIter ; gIter++){
+
+			/* Receive the distance matrix */
+			MPI_Bcast(dMat , NUM_CITIES * NUM_CITIES , MPI_FLOAT, 0,  MPI_COMM_WORLD);	
+
+			/* Receive the initial tours (Number of tours can be diferent for each MPI node if global population size is not multiple of number of worker nodes) */
+			rowPerProc = ( rank == 1) ? tourCountOnNode[0] : (tourCountOnNode[rank - 1] - tourCountOnNode[rank - 2]);
+			initialPopulation = (int **)malloc(sizeof(int *) * rowPerProc);
+			for (int i = 0 ; i < rowPerProc ; i++)
+				initialPopulation[i] = (int *) malloc(sizeof(int) * NUM_CITIES));
+			
+			MPI_Recv(initialPopulation , rowPerProc * NUM_CITIES, MPI_INT , 0 , 1 , MPI_COMM_WORLD , &status);
+
+			/* Divide these tours among OpenMP threads */
+
+			/* Within each OpenMP thread divide each tour into 4 subparts and optimize each subpart on CUDA kernel */
+	
+			/* Combine optimized subparts from CUDA kernels into a complete tour */
+
+			/* Find the most optimal tour across all OpenMP threads on this MPI mode and send this tour to MASTER */
+		}
+		/************************************************************************************************************/		
+
+	}
+
+        MPI_Finalize();
+	return;
 }
 
