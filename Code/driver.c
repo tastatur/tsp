@@ -28,7 +28,7 @@ void main(int argc , char *argv)
 {
 	int i, tourCountOnNode[numMPINodes-1], rowPerProc, startRow , gIter , lIter;
   	int **dMat;
-  	int **TSPData_coordinatntes;
+  	int **TSPData_coordinates;
   	char *path = (char *)malloc(sizeof(char) * pathLen);
 
         /* Initialize the MPI communication world */
@@ -41,6 +41,10 @@ void main(int argc , char *argv)
 
 	/* Initialize the data matrix */
 	int **initialPopulation;
+	TSPData_coordinates = (int**)malloc(sizeof(int*) * NUM_CITIES);
+	for(i=0 ; i< NUM_CITIES ; i++)
+		TSPData_coordinates = (int*)malloc(sizeof(int) * NUM_CITIES);
+
 	dMat = (int **)malloc(sizeof(int *) * NUM_CITIES);
   	for(i = 0 ; i < NUM_CITIES; i++)
     		dMat[i] = (int *)malloc(sizeof(int) * NUM_CITIES);
