@@ -27,7 +27,7 @@ void findTourCountForNode(int *tourCountOnNode){
 void main(int argc , char *argv)
 {
 	int i, tourCountOnNode[numMPINodes-1], rowPerProc, startRow , gIter , lIter;
-  	float **dMat;
+  	int **dMat;
   	int **TSPData_coordinatntes;
   	char *path = (char *)malloc(sizeof(char) * pathLen);
 
@@ -41,9 +41,9 @@ void main(int argc , char *argv)
 
 	/* Initialize the data matrix */
 	int **initialPopulation;
-	dMat = (float **)malloc(sizeof(float *) * NUM_CITIES);
+	dMat = (int **)malloc(sizeof(int *) * NUM_CITIES);
   	for(i = 0 ; i < NUM_CITIES; i++)
-    		dMat[i] = (float *)malloc(sizeof(float) * NUM_CITIES);
+    		dMat[i] = (int *)malloc(sizeof(int) * NUM_CITIES);
 	
 	/* Find tour count handled by each mpi node */
 	findTourCountForNode(tourCountOnNode);
@@ -56,7 +56,7 @@ void main(int argc , char *argv)
   		initialPopulation = GenerateInitPopulation(dMat);
 		
 		/* Brodcast the distance matrix */
-		MPI_Bcast(dMat , NUM_CITIES * NUM_CITIES , MPI_FLOAT, 0,  MPI_COMM_WORLD);	
+		MPI_Bcast(dMat , NUM_CITIES * NUM_CITIES , MPI_INT, 0,  MPI_COMM_WORLD);	
 
 		/******************************* This will be executed on MASTER for fixed number of global iterations ****************/
 		for (gIter = 0 ; gIter < globalIter ; gIter++){
@@ -82,7 +82,7 @@ void main(int argc , char *argv)
 		for (gIter = 0 ; gIter < globalIter ; gIter++){
 
 			/* Receive the distance matrix */
-			MPI_Bcast(dMat , NUM_CITIES * NUM_CITIES , MPI_FLOAT, 0,  MPI_COMM_WORLD);	
+			MPI_Bcast(dMat , NUM_CITIES * NUM_CITIES , MPI_INT, 0,  MPI_COMM_WORLD);	
 
 			/* Receive the initial tours (Number of tours can be diferent for each MPI node if global population size is not multiple of number of worker nodes) */
 			rowPerProc = ( rank == 1) ? tourCountOnNode[0] : (tourCountOnNode[rank - 1] - tourCountOnNode[rank - 2]);
