@@ -5,9 +5,9 @@
 void printTour(int *t);
 void CheckValidity(int *tour);
 int GetNearestCity(int currCity, float** dMat, int* visited);
-void GenerateTour(int initialCity, int* tourPointer, float** dMat);
+int** GenerateTour(int initialCity, int* tourPointer, float** dMat);
 
-void GenerateInitPopulation(float** dMat)
+int** GenerateInitPopulation(float** dMat)
 {
   int i,j, city;
 
@@ -23,6 +23,8 @@ void GenerateInitPopulation(float** dMat)
 
   for(i = 0; i < NUM_CITIES; i++)
     printTour(initialPopulation[i]);
+
+  return initialPopulation;
 }
 
 
