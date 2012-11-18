@@ -1,15 +1,12 @@
 #include "globalData.h"
 #include "readFromFile.h"
-#include<stdio.h>
-#include<math.h>
-#include<stdlib.h>
-#include<string.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
-
-int ** readDataFromFile(char *path,float **TSPData)
+int ** readDataFromFile(char *path, int **TSPData)
 {
-	
-	//int *TSPData_values;
 	int NUM_CITY = 0,counter = 0,num , i;
 	char ch;
 	strcpy(path , pathString);
@@ -24,39 +21,36 @@ int ** readDataFromFile(char *path,float **TSPData)
                         exit(1);
                 }
 
-                // Find the number of cities from data
+        // Find the number of cities from data
         while((ch = getc(fin)) != EOF)
-                {
-                        if(ch == '\n')
-                           NUM_CITY++;
-                }
-//        printf("Number of cities %d\n",NUM_CITY);
+        {
+                if(ch == '\n')
+                NUM_CITY++;
+        }
 
 	fseek(fin , SEEK_SET , 0);	
 	
 	TSPData_values = (int **)malloc(sizeof(int*)*NUM_CITY);
-	//TSPData_values = (int *)malloc(sizeof(int)*NUM_CITY);
 
 	for(i=0;i<NUM_CITY;i++)
 		TSPData_values[i] = (int *)malloc(sizeof(int)*3);
 
 
         while (fscanf(fin , "%d" , &num) != EOF)
-                {
-                        TSPData_values[counter][0] = num;
+        {
+              TSPData_values[counter][0] = num;
+              fscanf(fin , "%d" , &num);
+              TSPData_values[counter][1] = num;
 
-                        fscanf(fin , "%d" , &num);
-                        TSPData_values[counter][1] = num;
+              fscanf(fin , "%d" , &num);
+              TSPData_values[counter][2] = num;
 
-                        fscanf(fin , "%d" , &num);
-                        TSPData_values[counter][2] = num;
-//		printf("TSP values %d %d %d \n" , TSPData_values[counter][0] , TSPData_values[counter][1] , TSPData_values[counter][2]);
-		counter++;
-                }
+              counter++;
+        }
 
-                fclose(fin);
+        fclose(fin);
 	make2DArray(TSPData , TSPData_values , NUM_CITY);
-return TSPData_values;
+	return TSPData_values;
 }
 
 void readActualPath(char *path, int* correctPath)
@@ -65,31 +59,28 @@ void readActualPath(char *path, int* correctPath)
 	int k = 0, num;
 
         if (fin == NULL)
-                {
-                        printf("File not found");
-                        getchar();
-                        exit(1);
-                }
+        {
+               printf("File not found");
+               getchar();
+               exit(1);
+        }
 	
         while (fscanf(fin , "%d" , &num) != EOF)
-                {
-                        correctPath[k] = num;
-		}
-	fclose(fin);
-
-}
-
-int ** make2DArray(float **TSPData , int **TSPData_values, int NUM_CITY)
-{
-int k , i;
-for ( k = 0 ; k < NUM_CITY ; k++) {
-
-for ( i = 0 ; i<NUM_CITY ; i++) {
-		TSPData[k][i] = (((float)pow((TSPData_values[k][2] - TSPData_values[i][2]),2) + (float)pow((TSPData_values[k][1] - TSPData_values[i][1]),2)));
-//	printf("%f \t",TSPData[k][i]);
+        {
+               correctPath[k] = num;
 	}
-//	printf("\n");
+	fclose(fin);
 }
+
+void make2DArray(int **TSPData , int **TSPData_values, int NUM_CITY)
+{
+	int k , i;
+	for ( k = 0 ; k < NUM_CITY ; k++) {
+
+		for ( i = 0 ; i<NUM_CITY ; i++) {
+			TSPData[k][i] = (((int)pow((TSPData_values[k][2] - TSPData_values[i][2]),2) + (int)pow((TSPData_values[k][1] - 				TSPData_values[i][1]),2)));
+		}
+	}
 }
 
 /*int main()

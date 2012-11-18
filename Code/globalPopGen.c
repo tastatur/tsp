@@ -4,12 +4,12 @@
 
 void printTour(int *t);
 void CheckValidity(int *tour);
-int GetNearestCity(int currCity, float** dMat, int* visited);
-int** GenerateTour(int initialCity, int* tourPointer, float** dMat);
+int GetNearestCity(int currCity, int** dMat, int* visited);
+void GenerateTour(int initialCity, int* tourPointer, int** dMat);
 
-int** GenerateInitPopulation(float** dMat)
+int** GenerateInitPopulation(int** dMat)
 {
-  int i,j, city;
+  int i, city;
 
   int **initialPopulation = (int **)malloc(sizeof(int *) * NUM_CITIES);
   for(i = 0; i < NUM_CITIES; i++)
@@ -36,7 +36,7 @@ void printTour(int *t)
   printf("\n");
 }
 
-void GenerateTour(int initialCity, int* tourPointer, float** dMat)
+void GenerateTour(int initialCity, int* tourPointer, int** dMat)
 {
   int i;
   int visited[NUM_CITIES];
@@ -59,11 +59,11 @@ void GenerateTour(int initialCity, int* tourPointer, float** dMat)
   }
 }
 
-int GetNearestCity(int currCity, float** dMat, int* visited)
+int GetNearestCity(int currCity, int** dMat, int* visited)
 {
   int i;
   int nextCity = INVALID;
-  float distance = 100000000000;
+  int distance = 100000000000;
   for(i = 0 ; i < NUM_CITIES; i++)
   {
     if(dMat[currCity][i] < distance && visited[i] == 0)
