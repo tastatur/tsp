@@ -4,12 +4,24 @@
 #include <math.h>
 #include "TSPCuda.h"
 #include "timer.h"
-#include "globalData.h"
+#include "IndMPINode.h"
+
+#define CHECK_GPU(msg) check_gpu__ (__FILE__, __LINE__, (msg))
+static void check_gpu__ (const char * file, size_t line, const char * msg);
+static void check_gpu__ (const char* file, size_t line, const char* msg)
+{
+  cudaError_t err = cudaGetLastError ();
+  if (err != cudaSuccess) {
+    fprintf (stderr, "*** [%s:%lu] %s -- CUDA Error (%d): %s ***\n",
+	     file, line, msg, (int)err, cudaGetErrorString (err));
+    exit (-1);
+  }
+}
 
 __global__
-void TSPSwapKernel (unsigned int n, keytype* A, int* coords, unsigned int loops)
+void TSPSwapKernel (unsigned int n, int* A, int* coords, unsigned int loops)
 {
-  extern __shared__ float fitnessMatrix[NUM_CITIES/4][NUM_CITIES/4];
+   __shared__ float fitnessMatrix[NUM_CITIES/4][NUM_CITIES/4];
   int localTour[NUM_CITIES/4];
   int i, prevX, prevY, city;
   int tidx = threadIdx.x;
@@ -34,7 +46,8 @@ void TSPSwapKernel (unsigned int n, keytype* A, int* coords, unsigned int loops)
     for(i = 1; i < NUM_CITIES/4; i++)
     {
       city = localTour[i];
-      distance += (float)pow(((coords + (city * 3))[2] - prevY),2) + (float)pow(((coords + (3 * city))[1] - prevX),2);
+      distance += (float)(((coords + (city * 3))[2] - prevY) * ((coords + (city * 3))[2] - prevY)) 
+	           + (float)(((coords + (3 * city))[1] - prevX) * ((coords + (3 * city))[1] - prevX));
       prevX = (coords + (city * 3))[1];
       prevY = (coords + (city * 3))[2];
     }
@@ -44,7 +57,7 @@ void TSPSwapKernel (unsigned int n, keytype* A, int* coords, unsigned int loops)
 }
 
 
-ketype *
+int *
 createArrayOnGPU (unsigned int n)
 {
   int* tour_gpu = NULL;
@@ -63,21 +76,21 @@ int* createDMatOnGPU(unsigned int n)
   {
     cudaMalloc(&coords_dMat,3 * n * sizeof(int));
     CHECK_GPU("OUT OF MEMORY FOR DMAT");
-    assert(tour_dMat);
+    assert(coords_dMat);
   }
-  return tour_dMat;
+  return coords_dMat;
 }
 
 void
-freeKeysOnGPU (keytype* tour_gpu)
+freeKeysOnGPU (int* tour_gpu)
 {
   if (tour_gpu) cudaFree (tour_gpu);
 }
 
 void
-copyKeysToGPU (unsigned int n, keytype* Dest_gpu, const keytype* Src_cpu)
+copyKeysToGPU (unsigned int n, int* Dest_gpu, const int* Src_cpu)
 {
-  cudaMemcpy (Dest_gpu, Src_cpu, n * sizeof (keytype),
+  cudaMemcpy (Dest_gpu, Src_cpu, n * sizeof (int),
               cudaMemcpyHostToDevice);  CHECK_GPU ("Copying keys to GPU");
 }
 
@@ -94,18 +107,18 @@ void copyDMatToGPU(unsigned int n, int * Dest_gpu, const int** Src_cpu)
 void
 copyKeysFromGPU (unsigned int n, int* Dest_cpu, const int* Src_gpu)
 {
-  cudaMemcpy (Dest_cpu, Src_gpu, n * sizeof (keytype),cudaMemcpyDeviceToHost);  
+  cudaMemcpy (Dest_cpu, Src_gpu, n * sizeof (int),cudaMemcpyDeviceToHost);  
   CHECK_GPU ("Copying keys from GPU");
 }
 
-void TSPSwapRun(int* tour, int** coords)
+void TSPSwapRun(int* tour,const int** coords)
 {
   int n = NUM_CITIES;
   int* tour_gpu = createArrayOnGPU(n);
   int* coords_gpu = createDMatOnGPU(NUM_CITIES);
 
   copyKeysToGPU (n,tour_gpu, tour);
-  copyDMatToGPU(n, tour_dMat, coords);
+  copyDMatToGPU(n, coords_gpu, coords);
 
   /* Start timer, _after_ CPU-GPU copies */
   stopwatch_t* timer = stopwatch_create ();
@@ -119,3 +132,7 @@ void TSPSwapRun(int* tour, int** coords)
   long double t_merge_nocopy = stopwatch_stop (timer);
 }
 
+int main()
+{
+  TSPSwapRun((int *)0, (const int**)0);
+}
