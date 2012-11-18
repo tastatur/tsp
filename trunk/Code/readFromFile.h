@@ -1,8 +1,8 @@
 
 extern float **TSPData;
 
-int ** readDataFromFile(char * , float **);
+int ** readDataFromFile(char * , int **);
 
-int ** make2DArray(float ** , int ** , int NUM_CITY);
+void make2DArray(int ** , int ** , int NUM_CITY);
 
 void readActualPath(char * , int *);

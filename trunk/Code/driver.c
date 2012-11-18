@@ -1,7 +1,9 @@
 #include "globalData.h"
+#include "readFromFile.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+# include <math.h>
 #ifndef MPI_1
 #include<mpi.h>
 #endif
@@ -13,18 +15,18 @@ void findTourCountForNode(int *tourCountOnNode){
 	int i , tempCityCount = NUM_CITIES;
 	int quot;
 
-	quot = (int)Math.ceil((float)tempCityCount/(numMPINodes - 1));
+	quot = (int)ceil((float)tempCityCount/(numMPINodes - 1));
 	tourCountOnNode[0] = quot;
 	tempCityCount -= quot ;
 	 
-	for (i = 1 ; i < numMPINODES - 1 ; i++)
+	for (i = 1 ; i < numMPINodes - 1 ; i++)
 	{
-		quot = (int)Math.ceil((float)tempCityCount/(numMPINodes - i - 1));
-		tourCountOnNode[i] = quot + tourCountOnNode[i-1]);
+		quot = (int)ceil((float)tempCityCount/(numMPINodes - i - 1));
+		tourCountOnNode[i] = quot + tourCountOnNode[i-1];
 		tempCityCount -= quot;
 	}	
 }
-void main(int argc , char *argv)
+int main(int argc , char **argv)
 {
 	int i, tourCountOnNode[numMPINodes-1], rowPerProc, startRow , gIter , lIter;
   	int **dMat;
@@ -91,8 +93,8 @@ void main(int argc , char *argv)
 			/* Receive the initial tours (Number of tours can be diferent for each MPI node if global population size is not multiple of number of worker nodes) */
 			rowPerProc = ( rank == 1) ? tourCountOnNode[0] : (tourCountOnNode[rank - 1] - tourCountOnNode[rank - 2]);
 			initialPopulation = (int **)malloc(sizeof(int *) * rowPerProc);
-			for (int i = 0 ; i < rowPerProc ; i++)
-				initialPopulation[i] = (int *) malloc(sizeof(int) * NUM_CITIES));
+			for (i = 0 ; i < rowPerProc ; i++)
+				initialPopulation[i] = (int *) malloc(sizeof(int) * NUM_CITIES);
 			
 			MPI_Recv(initialPopulation , rowPerProc * NUM_CITIES, MPI_INT , 0 , 1 , MPI_COMM_WORLD , &status);
 
@@ -109,6 +111,6 @@ void main(int argc , char *argv)
 	}
 
         MPI_Finalize();
-	return;
+	return 0;
 }
 
