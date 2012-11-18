@@ -1,3 +1,5 @@
+#define int keytype
+
 keytype* createKeysOnGPU (unsigned int n);
 
 /** Free memory previously allocated for keys on the GPU. */
