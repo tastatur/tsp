@@ -1,7 +1,5 @@
 #include <omp.h>
-//#ifndef globaldata
-//#include "globalData.h"
-//#endif
+#include "globalData.h"
 
 /* Function prototype */
 void ProcessRoute(int** localPopulation , int numberOfTours, int **coords);
@@ -20,8 +18,8 @@ void ProcessRoute(int** localPopulation, int numberOfTours, int** coords)
     #pragma omp default(none) shared(localPopulation, NUM_CITIES, numberOfTours) private(tour)
     for(tour = 0; tour < numberOfTours; tour++)
     {
-      int numLocalCities = 10;// BLOCKSIZE ;
-      int numLocalCitiesFinal = 10;//NUM_CITIES - (3 * BLOCKSIZE);
+      int numLocalCities =  BLOCKSIZE ;
+      int numLocalCitiesFinal = NUM_CITIES - (3 * BLOCKSIZE);
   
 //      TSPSwapRun(tour, coords);
     }
