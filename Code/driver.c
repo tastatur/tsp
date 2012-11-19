@@ -60,7 +60,7 @@ int main(int argc , char **argv)
   		initialPopulation = GenerateInitPopulation(dMat);
 		
 		/* Brodcast the distance matrix */
-		MPI_Bcast(dMat , NUM_CITIES * NUM_CITIES , MPI_INT, 0,  MPI_COMM_WORLD);	
+	//	MPI_Bcast(dMat , NUM_CITIES * NUM_CITIES , MPI_INT, 0,  MPI_COMM_WORLD);	
 
 		/******************************* This will be executed on MASTER for fixed number of global iterations ****************/
 		for (gIter = 0 ; gIter < globalIter ; gIter++){
@@ -87,7 +87,7 @@ int main(int argc , char **argv)
 		/******************************* This will be executed on WORKERS for fixed number of global iterations ****************/
 		for (gIter = 0 ; gIter < globalIter ; gIter++){
 			/* Receive the distance matrix */
-			MPI_Bcast(dMat , NUM_CITIES * NUM_CITIES , MPI_INT, 0,  MPI_COMM_WORLD);	
+		//	MPI_Bcast(dMat , NUM_CITIES * NUM_CITIES , MPI_INT, 0,  MPI_COMM_WORLD);	
 
 			/* Receive the initial tours (Number of tours can be diferent for each MPI node if global population size is not multiple of number of worker nodes) */
 			rowPerProc = ( rank == 1) ? tourCountOnNode[0] : (tourCountOnNode[rank - 1] - tourCountOnNode[rank - 2]);
@@ -99,7 +99,7 @@ int main(int argc , char **argv)
 			for (i = 0 ; i < rowPerProc ; i++)
 				MPI_Recv(initialPopulation[i] , NUM_CITIES, MPI_INT , 0 , 1 , MPI_COMM_WORLD , &status);
 
-			ProcessRoute(initialPopulation,rowPerProc,dMat);
+			ProcessRoute(initialPopulation,rowPerProc,TSPData_coordinates);
 
 			/* Divide these tours among OpenMP threads */
 
