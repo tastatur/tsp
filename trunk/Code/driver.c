@@ -1,4 +1,6 @@
+//#ifndef _GLOBAL_H
 #include "globalData.h"
+//#endif
 #include "readFromFile.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -98,6 +100,8 @@ int main(int argc , char **argv)
 			
 			for (i = 0 ; i < rowPerProc ; i++)
 				MPI_Recv(initialPopulation[i] , NUM_CITIES, MPI_INT , 0 , 1 , MPI_COMM_WORLD , &status);
+
+			ProcessRoute(initialPopulation,rowPerProc,dMat);
 
 			/* Divide these tours among OpenMP threads */
 
