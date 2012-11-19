@@ -18,7 +18,7 @@ void ProcessRoute(int** localPopulation, int numberOfTours, int** coords)
     #pragma omp default(none) shared(localPopulation, NUM_CITIES, numberOfTours) private(tour)
     for(tour = 0; tour < numberOfTours; tour++)
     {
-      int numLocalCities =  BLOCKSIZE ;
+      int numLocalCities = BLOCKSIZE*BLOCKSIZE;
       int numLocalCitiesFinal = NUM_CITIES - (3 * BLOCKSIZE);
   
 //      TSPSwapRun(tour, coords);

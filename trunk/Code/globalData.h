@@ -18,8 +18,9 @@ char *pathName;
 #define globalIter 1
 #define localIter 1
 
-const unsigned int NUM_BLOCKS = 4;
-const unsigned int BLOCKSIZE = NUM_CITIES * NUM_CITIES;
+#define NUM_BLOCKS = 4
+#define BLOCKSIZE NUM_CITIES
+//#define BLOCKSIZE(a) ((a) * (a))
 
 /******** ERROR CODES *********/
 #define INVALID -1
