@@ -1,7 +1,4 @@
-#ifndef _GLOBAL_H
 #include "globalData.h"
-#endif
-
 #include "readFromFile.h"
 #include <stdio.h>
 #include <math.h>

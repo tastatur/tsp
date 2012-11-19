@@ -1,7 +1,4 @@
-#ifndef _GLOBAL_H
 #include "globalData.h"
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
