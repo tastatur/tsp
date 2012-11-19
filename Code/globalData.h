@@ -13,17 +13,16 @@ char *pathName;
 #define pathString "TSPData.txt"
 #define outPathComputed "TSPComputed.dat"
 #define outPathActual "TSPActual.dat"
-#define numOpenMPthreads_citypaths 10
+//#define numOpenMPthreads_citypaths 10
 #define numMPINodes 10
-#define numOpenMPThreadsPerMPINode 10
-#define numberOfDivisions  4
-#define cudaThreadBlocks = 4
-#define cudaThreadsPerBlock = 16
 #define globalIter 1
 #define localIter 1
 
-/******** ERROR CODES *********/
+const unsigned int NUM_BLOCKS = 4;
+const unsigned int BLOCKSIZE = NUM_CITIES * NUM_CITIES;
 
+/******** ERROR CODES *********/
 #define INVALID -1
+#define SUCCESS 1
 
 #endif /* _GLOBAL_H */
