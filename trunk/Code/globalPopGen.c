@@ -1,12 +1,16 @@
 #include "globalData.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
+/* Function declaration */
 void printTour(int *t);
 void CheckValidity(int *tour);
 int GetNearestCity(int currCity, int** dMat, int* visited);
 void GenerateTour(int initialCity, int* tourPointer, int** dMat);
+int **GenerateInitPopulation(int **dMat);
 
+/* Function definition */
 int** GenerateInitPopulation(int** dMat)
 {
   int i, city;
@@ -63,7 +67,7 @@ int GetNearestCity(int currCity, int** dMat, int* visited)
 {
   int i;
   int nextCity = INVALID;
-  int distance = 100000000000;
+  int distance = INT_MAX;
   for(i = 0 ; i < NUM_CITIES; i++)
   {
     if(dMat[currCity][i] < distance && visited[i] == 0)
