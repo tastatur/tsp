@@ -30,7 +30,7 @@ void TSPSwapKernel (unsigned int n, int* A, int* coords, unsigned int loops)
 	currentNumCities++;
 
    __shared__ float fitnessMatrix[(NUM_CITIES/4)+1][(NUM_CITIES/4)+1];
-  int localTour[currentNumCities];
+  int localTour[(NUM_CITIES/4)+1];
   int i, prevX, prevY, city;
   int tidx = threadIdx.x;
   int tidy = threadIdx.y;
