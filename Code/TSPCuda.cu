@@ -3,8 +3,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include "TSPCuda.h"
-#include "timer.h"
-#include "IndMPINode.h"
+//#include "timer.h"
+#include "globalData.h"
+//#include "IndMPINode.h"
 
 #define CHECK_GPU(msg) check_gpu__ (__FILE__, __LINE__, (msg))
 static void check_gpu__ (const char * file, size_t line, const char * msg);
@@ -21,8 +22,15 @@ static void check_gpu__ (const char* file, size_t line, const char* msg)
 __global__
 void TSPSwapKernel (unsigned int n, int* A, int* coords, unsigned int loops)
 {
-   __shared__ float fitnessMatrix[NUM_CITIES/4][NUM_CITIES/4];
-  int localTour[NUM_CITIES/4];
+ 
+  int currentNumCities=0;
+  currentNumCities = NUM_CITIES / 4;
+
+  if(blockIdx.x < (NUM_CITIES % 4))
+	currentNumCities++;
+
+   __shared__ float fitnessMatrix[(NUM_CITIES/4)+1][(NUM_CITIES/4)+1];
+  int localTour[currentNumCities];
   int i, prevX, prevY, city;
   int tidx = threadIdx.x;
   int tidy = threadIdx.y;
@@ -30,7 +38,7 @@ void TSPSwapKernel (unsigned int n, int* A, int* coords, unsigned int loops)
   float distance = 0;
   int temp;
 
-  for(i = 0; i < NUM_CITIES/4; i++)
+  for(i = 0; i < currentNumCities; i++)
     localTour[i] = (bid * blockDim.x) + i;
   
   if(tidx <= tidy && tidx != 0 && tidy != blockDim.x)
@@ -43,7 +51,7 @@ void TSPSwapKernel (unsigned int n, int* A, int* coords, unsigned int loops)
     prevX = (coords + (3 * localTour[0]))[1];
     prevY = (coords + (3 * localTour[0]))[2];
 
-    for(i = 1; i < NUM_CITIES/4; i++)
+    for(i = 1; i < currentNumCities; i++)
     {
       city = localTour[i];
       distance += (float)(((coords + (city * 3))[2] - prevY) * ((coords + (city * 3))[2] - prevY)) 
@@ -111,6 +119,7 @@ copyKeysFromGPU (unsigned int n, int* Dest_cpu, const int* Src_gpu)
   CHECK_GPU ("Copying keys from GPU");
 }
 
+extern "C"
 void TSPSwapRun(int* tour,const int** coords)
 {
   int n = NUM_CITIES;
@@ -121,18 +130,18 @@ void TSPSwapRun(int* tour,const int** coords)
   copyDMatToGPU(n, coords_gpu, coords);
 
   /* Start timer, _after_ CPU-GPU copies */
-  stopwatch_t* timer = stopwatch_create ();
-  assert (timer);
-  stopwatch_start (timer);
+ // stopwatch_t* timer = stopwatch_create ();
+ // assert (timer);
+ // stopwatch_start (timer);
 
-  TSPSwapKernel<<<NUM_BLOCKS, BLOCKSIZE>>> (n, tour_gpu, coords_gpu, localIter);
+  TSPSwapKernel<<<NUM_BLOCKS_CUDA,BLOCKSIZE_CUDA>>> (n, tour_gpu, coords_gpu, localIter);
   cudaDeviceSynchronize();
 
   /* Stop timer and report bandwidth _without_ the CPU-GPU copies */
-  long double t_merge_nocopy = stopwatch_stop (timer);
+ //long double t_merge_nocopy = stopwatch_stop (timer);
 }
 
-int main()
+/*int main()
 {
   TSPSwapRun((int *)0, (const int**)0);
-}
+}*/

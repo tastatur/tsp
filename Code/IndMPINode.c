@@ -1,11 +1,9 @@
 #include <omp.h>
 #include "globalData.h"
+//#include "IndMPINode.h"
 
-/* Function prototype */
-void ProcessRoute(int** localPopulation , int numberOfTours, int **coords);
+void ProcessRoute(int**,int,int**);
 
-
-/* Function Definition */
 void ProcessRoute(int** localPopulation, int numberOfTours, int** coords)
 {
   int tour;
@@ -18,10 +16,10 @@ void ProcessRoute(int** localPopulation, int numberOfTours, int** coords)
     #pragma omp default(none) shared(localPopulation, NUM_CITIES, numberOfTours) private(tour)
     for(tour = 0; tour < numberOfTours; tour++)
     {
-      int numLocalCities = BLOCKSIZE*BLOCKSIZE;
+      int numLocalCities = BLOCKSIZE ;
       int numLocalCitiesFinal = NUM_CITIES - (3 * BLOCKSIZE);
   
-//      TSPSwapRun(tour, coords);
+      TSPSwapRun(tour, coords);
     }
   }
 }
