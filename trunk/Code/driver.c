@@ -24,6 +24,12 @@ void findTourCountForNode(int *tourCountOnNode){
 		tempCityCount -= quot;
 	}	
 }
+/**
+* @Returns the fitness of the tour 	
+**/
+int computeFitness(int * tour){
+	return 0;
+}
 int main(int argc , char **argv)
 {
 	int i, tourCountOnNode[numMPINodes-1], rowPerProc, startRow , gIter , lIter, j;
@@ -34,6 +40,7 @@ int main(int argc , char **argv)
         /* Initialize the MPI communication world */
         int  rank, size;
         MPI_Status status;
+	MPI_Request *request , reqStatus;
 
         MPI_Init(&argc, &argv);
         MPI_Comm_size(MPI_COMM_WORLD,&size);
@@ -60,10 +67,13 @@ int main(int argc , char **argv)
   		initialPopulation = GenerateInitPopulation(dMat);
 		
 		/* Brodcast the distance matrix */
-	//	MPI_Bcast(dMat , NUM_CITIES * NUM_CITIES , MPI_INT, 0,  MPI_COMM_WORLD);	
+		//MPI_Bcast(dMat , NUM_CITIES * NUM_CITIES , MPI_INT, 0,  MPI_COMM_WORLD);	
+		
+		/* Generate request handles */
+		request = (MPI_Request *) malloc(sizeof(MPI_Request) * (size - 1));
 
 		/******************************* This will be executed on MASTER for fixed number of global iterations ****************/
-		for (gIter = 0 ; gIter < globalIter ; gIter++){
+		for (gIter = 0 ; gIter < globalIter  ; gIter++){
 
 			/* Distribute this global population across all MPI nodes */
 			for (i = 0 ; i < size - 1 ; i++){
@@ -75,7 +85,12 @@ int main(int argc , char **argv)
 			}
 			
 			/* Wait to receive the best tour from all worker MPI nodes */
-	
+			for (i = 1 ; i < size ; i++)
+				MPI_Irecv(initialPopulation[i-1] , NUM_CITIES , MPI_INT , i , i , MPI_COMM_WORLD , &request[i-1]);
+
+			/* Wait till all nodes send their best solutions */
+			MPI_Waitall(size - 1 , request, &status);
+		
 			/* Now improve these tours to generate a global population of improved tours */
 		}
 		/************************************************************************************************************/		
@@ -84,34 +99,36 @@ int main(int argc , char **argv)
   		//resultVerification(TSPData_coordinates);
 	}
 	else{
+		rowPerProc = ( rank == 1) ? tourCountOnNode[0] : (tourCountOnNode[rank - 1] - tourCountOnNode[rank - 2]);
+		initialPopulation = (int **)malloc(sizeof(int *) * rowPerProc);
+
+		for (i = 0 ; i < rowPerProc ; i++)
+			initialPopulation[i] = (int *) malloc(sizeof(int) * NUM_CITIES);
+	
 		/******************************* This will be executed on WORKERS for fixed number of global iterations ****************/
-		for (gIter = 0 ; gIter < globalIter ; gIter++){
+		for (gIter = 0 ; gIter < globalIter  ; gIter++){
 			/* Receive the distance matrix */
-		//	MPI_Bcast(dMat , NUM_CITIES * NUM_CITIES , MPI_INT, 0,  MPI_COMM_WORLD);	
+			//MPI_Bcast(dMat , NUM_CITIES * NUM_CITIES , MPI_INT, 0,  MPI_COMM_WORLD);	
 
-			/* Receive the initial tours (Number of tours can be diferent for each MPI node if global population size is not multiple of number of worker nodes) */
-			rowPerProc = ( rank == 1) ? tourCountOnNode[0] : (tourCountOnNode[rank - 1] - tourCountOnNode[rank - 2]);
-			initialPopulation = (int **)malloc(sizeof(int *) * rowPerProc);
-
-			for (i = 0 ; i < rowPerProc ; i++)
-				initialPopulation[i] = (int *) malloc(sizeof(int) * NUM_CITIES);
-			
+			/* Receive the initial tours */
 			for (i = 0 ; i < rowPerProc ; i++)
 				MPI_Recv(initialPopulation[i] , NUM_CITIES, MPI_INT , 0 , 1 , MPI_COMM_WORLD , &status);
 
-			ProcessRoute(initialPopulation,rowPerProc,TSPData_coordinates);
-
 			/* Divide these tours among OpenMP threads */
+			// ProcessRoute(initialPopulation,rowPerProc,TSPData_coordinates);
 
 			/* Within each OpenMP thread divide each tour into 4 subparts and optimize each subpart on CUDA kernel */
 	
 			/* Combine optimized subparts from CUDA kernels into a complete tour */
 
 			/* Find the most optimal tour across all OpenMP threads on this MPI mode and send this tour to MASTER */
+			MPI_Isend(initialPopulation[0] , NUM_CITIES , MPI_INT , 0 , rank , MPI_COMM_WORLD , &reqStatus);
+			
+			MPI_Waitall(1 , &reqStatus , &status);
 		}
+	
 		/************************************************************************************************************/		
 	}
-
         MPI_Finalize();
 	return 0;
 }
