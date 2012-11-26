@@ -1,8 +1,7 @@
+extern unsigned int **TSPData;
 
-extern float **TSPData;
+int* readDataFromFile(char * , unsigned  int **);
 
-int ** readDataFromFile(char * , int **);
-
-void make2DArray(int ** , int ** );
+void make2DArray(unsigned int ** , int * );
 
 void readActualPath(char * , int *);
