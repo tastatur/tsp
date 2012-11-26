@@ -36,6 +36,7 @@ void printInitialPopulation(int * initialPopulation){
 	}
 }
 
+/* Entry point of code */
 int main(int argc , char **argv)
 {
 	int i, rowPerProc, startRow, gIter, lIter, j, tourCountOnNode[numMPINodes-1];
