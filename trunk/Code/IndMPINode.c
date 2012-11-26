@@ -7,10 +7,16 @@
 
 void ProcessRoute(int*,int,const int*);
 
+struct indexesSend{
+int max;
+int cityIndex;
+};
+
 void ProcessRoute(int* localPopulation, int numberOfTours,const int* coords)
 {
-  int tour,distance = 0 , city , prevX = 0 , prevY = 0 , i = 0 , populationStartIndex;
-  int firstMax = INT_MAX , secondMax = INT_MAX ;
+  int tour,distance = 0 , city , prevX = 0 , prevY = 0 , i = 0 , j , populationStartIndex ;
+  struct indexesSend firstTourIndex , secondTourIndex;
+  firstTourIndex.max = INT_MAX , secondTourIndex.max = INT_MAX ;
   int numCities = NUM_CITIES;
   omp_set_num_threads(numberOfTours);
   int fitness[numberOfTours];
@@ -42,23 +48,27 @@ void ProcessRoute(int* localPopulation, int numberOfTours,const int* coords)
   for ( i = 0 ; i < numberOfTours ; i ++ )
   {
     /* printf("came in loop"); */
-    if( fitness[i] < firstMax ) {
-    secondMax = firstMax;
-    firstMax = fitness[i];}
+    if( fitness[i] < firstTourIndex.max ) {
+    secondTourIndex.max = firstTourIndex.max;
+    secondTourIndex.cityIndex = firstTourIndex.cityIndex;
+    firstTourIndex.max = fitness[i];
+    firstTourIndex.cityIndex = i;}
     
-    else if (fitness[i] < secondMax)
-      secondMax = fitness[i];
+    else if (fitness[i] < secondTourIndex.max){
+      secondTourIndex.max = fitness[i];
+      secondTourIndex.cityIndex = i;}
   }
   /* printf("firsMax %d " , firstMax); */
   /* printf("secondMax %d " , secondMax); */
   
   populationStartIndex = 0;
+  for ( j = 0 ; j < numToursUpdated ; j++) {
   for ( i = 0 ; i < numCities ; i++ )
   {
-    (localPopulation + numCities*(populationStartIndex))[i] = (localPopulation + numCities*firstMax)[i];
-    /* (localPopulation + numCities*(populationStartIndex + 1))[i] = (localPopulation + numCities*secondMax)[i]; */
+    (localPopulation + numCities*(populationStartIndex + j))[i] = (localPopulation + numCities*firstTourIndex.cityIndex)[i];
+    /* (localPopulation + numCities*(populationStartIndex + 1))[i] = (localPopulation + numCities*secondTourIndex)[i]; */
   }
-  
+  }
 }
 
 
