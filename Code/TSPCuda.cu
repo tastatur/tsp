@@ -241,11 +241,16 @@ void TSPSwapRun(int* tour,const int* coords)
   TSPSwapKernel<<<NUM_BLOCKS_CUDA,threadsPerBlock>>> (n, tour_gpu, coords_gpu, localIter);
   cudaDeviceSynchronize();
   
-  copyKeysFromGPU(n, newTour, tour_gpu);
+  copyKeysFromGPU(n, tour, tour_gpu);
   for(int i = 0; i < n; i++)
-    printf("%d ", newTour[i]);
+    printf("%d ", tour[i]);
   printf("\n");
+
+  if(tour_gpu)
+    cudaFree(tour_gpu);
   
+  if(coords_gpu)
+    cudaFree(coords_gpu);
 }
 
 int main()
