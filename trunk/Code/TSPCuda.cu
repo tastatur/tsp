@@ -3,9 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "TSPCuda.h"
-//#include "timer.h"
 #include "globalData.h"
-//#include "IndMPINode.h"
 
 #define CHECK_GPU(msg) check_gpu__ (__FILE__, __LINE__, (msg))
 static void check_gpu__ (const char * file, size_t line, const char * msg);
@@ -20,48 +18,151 @@ static void check_gpu__ (const char* file, size_t line, const char* msg)
 }
 
 __global__
-void TSPSwapKernel (unsigned int n, int* A, int* coords, unsigned int loops)
+void TSPSwapKernel (unsigned int n, int* completeTour, int* coords, unsigned int loops)
 {
  
-  int currentNumCities=0;
+  int currentNumCities = 0;
   currentNumCities = NUM_CITIES / 4;
 
-  if(blockIdx.x < (NUM_CITIES % 4))
-	currentNumCities++;
+   __shared__ float fitnessMatrix[(NUM_CITIES/4) + 1][(NUM_CITIES/4) + 1];
+   __shared__ int globalTourThreads[(NUM_CITIES/4) + 1];
+   __shared__ int swapCities[2] ;
 
-   __shared__ float fitnessMatrix[(NUM_CITIES/4)+1][(NUM_CITIES/4)+1];
   int localTour[(NUM_CITIES/4)+1];
-  int i, prevX, prevY, city;
+  int i,j, prevX, prevY, city , Min = 0 ,  counter = 0;
   int tidx = threadIdx.x;
   int tidy = threadIdx.y;
   int bid = blockIdx.x;
   float distance = 0;
+  float distanceBackup = 0;
+  float improvement = 0;
+  int  offset = 0;
+  int rem = NUM_CITIES % 4;
   int temp;
+ 
 
-  for(i = 0; i < currentNumCities; i++)
-    localTour[i] = (bid * blockDim.x) + i;
-  
-  if(tidx <= tidy && tidx != 0 && tidy != blockDim.x)
+  offset = (NUM_CITIES/4) * bid;
+  if(bid < rem)
   {
-    //swap cities tidx and tidy
-    temp = localTour[tidx];
-    localTour[tidx] = localTour[tidy];
-    localTour[tidy] = temp;
-    
-    prevX = (coords + (3 * localTour[0]))[1];
-    prevY = (coords + (3 * localTour[0]))[2];
+    currentNumCities++;
+    offset += bid;
+  }
+  if(bid >= rem)
+    offset += rem;
+  
+  for(i = 0; i < currentNumCities; i++) {
+    localTour[i] = completeTour[offset + i];
+    globalTourThreads[i] = localTour[i];
+  }
 
-    for(i = 1; i < currentNumCities; i++)
+  prevX = (coords + (2 * localTour[0]))[0];
+  prevY = (coords + (2 * localTour[0]))[1];
+  
+  for(i = 1; i < currentNumCities; i++)
+  {
+    city = localTour[i];
+    distanceBackup += (float)(((coords + (city * 2))[1] - prevY) * ((coords + (city * 2))[1] - prevY))
+      + (float)(((coords + (2 * city))[0] - prevX) * ((coords + (2 * city))[0] - prevX));
+    prevX = (coords + (city * 2))[0];
+    prevY = (coords + (city * 2))[1];
+  }  
+  fitnessMatrix[tidx][tidy] = (float)INT_MAX;
+
+
+  while ( counter != MAX_ITERATIONS )
+  {  
+    improvement = 0;
+    swapCities[0] = 0;
+    swapCities[1] = 0;
+
+    if(tidx < tidy && tidx != 0 && tidy != currentNumCities)
     {
-      city = localTour[i];
-      distance += (float)(((coords + (city * 3))[2] - prevY) * ((coords + (city * 3))[2] - prevY)) 
-	           + (float)(((coords + (3 * city))[1] - prevX) * ((coords + (3 * city))[1] - prevX));
-      prevX = (coords + (city * 3))[1];
-      prevY = (coords + (city * 3))[2];
-    }
+      /* 
+       * what is in globalTourThreads for the 
+       * first iteration ?
+       */
+      for(i = 0; i < currentNumCities; i++) {
+      	localTour[i] = globalTourThreads[i];
+      }
 
-    fitnessMatrix[tidx][tidy] = distance;
-  }    
+      //swap cities tidx and tidy
+      temp = localTour[tidx];
+      localTour[tidx] = localTour[tidy];
+      localTour[tidy] = temp;
+      
+      prevX = (coords + (2 * localTour[0]))[0];
+      prevY = (coords + (2 * localTour[0]))[1];
+      
+      distance = 0;
+      
+      for(i = 1; i < currentNumCities; i++)
+      {
+      	int city = localTour[i];
+      	distance += (((coords + (city * 2))[1] - prevY) * ((coords + (city * 2))[1] - prevY))
+	+ (float)(((coords + (2 * city))[0] - prevX) * ((coords + (2 * city))[0] - prevX));
+
+      	prevX = (coords + (city * 2))[0];
+      	prevY = (coords + (city * 2))[1];
+      }
+      
+      //fitnessMatrix[tidx][tidy] = distance;
+      //printf("%d(%d, %d) %f %f \n", bid, tidx, tidy, distance, distanceBackup);
+      if(distance < distanceBackup)   //if new distance is lower than the old , reject.
+      {
+      	fitnessMatrix[tidx][tidy] = distance;
+	//distanceBackup = distance;
+      }
+    }
+    
+     __syncthreads();
+
+    Min = INT_MAX;
+    int currentMin = 0;
+    
+    if(threadIdx.x == 0 && threadIdx.y == 0) {
+      for( i = 1 ; i < currentNumCities -1 ; i++ ) {
+      	for ( j = i ; j < currentNumCities -1 ; j++) {
+      	  improvement += fitnessMatrix[i][j];
+
+      	  if (fitnessMatrix[i][j] < Min )
+      	  {
+      	    Min = fitnessMatrix[i][j];
+      	    swapCities[0] = i;
+      	    swapCities[1] = j;
+      	  }
+      	} 
+      }
+    
+
+      temp = globalTourThreads[swapCities[0]];
+      globalTourThreads[swapCities[0]] = globalTourThreads[swapCities[1]];
+      globalTourThreads[swapCities[1]] = temp;
+   
+      if((swapCities[0] == 0 && swapCities[1] == 0) || counter ==  MAX_ITERATIONS - 1) {
+	for(i = 0 ; i < currentNumCities; i++) {
+	  completeTour[offset + i] = globalTourThreads[i];
+	}
+	//printf("In termination loop for block:%d, counter:%d\n", bid, counter);
+	break;
+      }
+
+    }
+    __syncthreads();
+
+    distanceBackup = fitnessMatrix[swapCities[0]][swapCities[1]];
+    fitnessMatrix[swapCities[0]][swapCities[1]] = INT_MAX;
+  
+    /*
+     * find the max value from fitness and swap them
+     * in the localtour and update localtour backup
+     * for all threads.
+     */
+    counter++;
+  }   
+  /*
+   * find the max value from fitness and swap only 
+   * those elements in completeTour 
+   */
 }
 
 
@@ -82,7 +183,7 @@ int* createDMatOnGPU(unsigned int n)
   int* coords_dMat = NULL;
   if(n)
   {
-    cudaMalloc(&coords_dMat,3 * n * sizeof(int));
+    cudaMalloc(&coords_dMat,2 * n * sizeof(int));
     CHECK_GPU("OUT OF MEMORY FOR DMAT");
     assert(coords_dMat);
   }
@@ -102,46 +203,60 @@ copyKeysToGPU (unsigned int n, int* Dest_gpu, const int* Src_cpu)
               cudaMemcpyHostToDevice);  CHECK_GPU ("Copying keys to GPU");
 }
 
-void copyDMatToGPU(unsigned int n, int * Dest_gpu, const int** Src_cpu)
+void copyDMatToGPU(unsigned int n, int * Dest_gpu, const int* Src_cpu)
 {
-  int i;
-  for(i = 0; i < n; i++)
-  {
-    cudaMemcpy(Dest_gpu + (i * 3), Src_cpu[i], 3 * sizeof(int), cudaMemcpyHostToDevice);
+
+    cudaMemcpy(Dest_gpu , Src_cpu, 2 * n * sizeof(int), cudaMemcpyHostToDevice);
     CHECK_GPU ("Copying coords to GPU");
-  }
 }
 
 void
-copyKeysFromGPU (unsigned int n, int* Dest_cpu, const int* Src_gpu)
+copyKeysFromGPU (unsigned int n, int* Dest_cpu, int* Src_gpu)
 {
   cudaMemcpy (Dest_cpu, Src_gpu, n * sizeof (int),cudaMemcpyDeviceToHost);  
   CHECK_GPU ("Copying keys from GPU");
 }
 
 extern "C"
-void TSPSwapRun(int* tour,const int** coords)
+void TSPSwapRun(int* tour,const int* coords)
 {
   int n = NUM_CITIES;
   int* tour_gpu = createArrayOnGPU(n);
+  
   int* coords_gpu = createDMatOnGPU(NUM_CITIES);
+  int *newTour = (int *)malloc(sizeof(int) * n);
+
+  int *coordsArray = (int *)malloc(2 * n * sizeof(int));
+  for(int i = 0; i < n; i++)
+  {
+    coordsArray[2 * i] = coords[2 * i];
+    coordsArray[(2 * i) + 1] = coords[(2 * i) + 1];
+  }
 
   copyKeysToGPU (n,tour_gpu, tour);
   copyDMatToGPU(n, coords_gpu, coords);
 
-  /* Start timer, _after_ CPU-GPU copies */
- // stopwatch_t* timer = stopwatch_create ();
- // assert (timer);
- // stopwatch_start (timer);
+  dim3 threadsPerBlock((NUM_CITIES/4) + 1, (NUM_CITIES/4) +1);
 
-  TSPSwapKernel<<<NUM_BLOCKS_CUDA,BLOCKSIZE_CUDA>>> (n, tour_gpu, coords_gpu, localIter);
+  TSPSwapKernel<<<NUM_BLOCKS_CUDA,threadsPerBlock>>> (n, tour_gpu, coords_gpu, localIter);
   cudaDeviceSynchronize();
-
-  /* Stop timer and report bandwidth _without_ the CPU-GPU copies */
- //long double t_merge_nocopy = stopwatch_stop (timer);
+  
+  copyKeysFromGPU(n, newTour, tour_gpu);
+  for(int i = 0; i < n; i++)
+    printf("%d ", newTour[i]);
+  printf("\n");
+  
 }
 
-/*int main()
+int main()
 {
-  TSPSwapRun((int *)0, (const int**)0);
-}*/
+  int tour[NUM_CITIES] = {0, 2, 1 ,3, 4, 6,5, 7, 8, 10, 9, 11, 12, 14, 13, 15, 16};
+  int* coords = (int*)malloc(2 * NUM_CITIES * sizeof(int *));
+  
+  for(int i = 0; i < NUM_CITIES; i++)
+  {
+    coords[(2 * i)] = i;
+    coords[(2 * i) + 1] = i;
+  }
+  TSPSwapRun((int *)tour, (const int*)coords);
+}
