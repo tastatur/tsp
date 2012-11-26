@@ -5,37 +5,31 @@
 #include <stdlib.h>
 #include <string.h>
 
-int ** readDataFromFile(char *path, int **TSPData)
+int * readDataFromFile(char *path, unsigned int **TSPData)
 {
-	int city_index = 0,num , i;
+	int city_index = 0, num , i;
 	strcpy(path , pathString);
 
 	FILE *fin = fopen(path, "r");
-	int **TSPData_values;
+	int *TSPData_values;
 
         if (fin == NULL)
-        	{
-                        printf("File not found");
-                        getchar();
-                        exit(1);
-                }
+       	{
+                 printf("File not found");
+                 getchar();
+                 exit(1);
+        }
 
-        // Find the number of cities from data
-	
-	TSPData_values = (int **)malloc(sizeof(int*)*NUM_CITIES);
-
-	for(i=0;i<NUM_CITIES;i++)
-		TSPData_values[i] = (int *)malloc(sizeof(int)*2);
-
+        /* Find the number of cities from data */
+	TSPData_values = (int *)malloc(sizeof(int) * NUM_CITIES * 2);
 
         while (fscanf(fin , "%d" , &city_index) != EOF)
         {
               fscanf(fin , "%d" , &num);
-
-              TSPData_values[city_index-1][0] = num;
-
+              TSPData_values[2*(city_index-1)] = num;
+		
               fscanf(fin , "%d" , &num);
-              TSPData_values[city_index-1][1] = num;
+              TSPData_values[2*city_index-1] = num;
         }
 
         fclose(fin);
@@ -62,14 +56,19 @@ void readActualPath(char *path, int* correctPath)
 	fclose(fin);
 }
 
-void make2DArray(int **TSPData , int **TSPData_values)
+void make2DArray(unsigned int **TSPData , int *TSPData_values)
 {
-	int k , i;
+	int k , i , CityIndex = 0 , eachCityIndex;
+	
 	for ( k = 0 ; k < NUM_CITIES ; k++) {
-
+		eachCityIndex = 0;
 		for ( i = 0 ; i<NUM_CITIES ; i++) {
-			TSPData[k][i] = (((int)pow((TSPData_values[k][2] - TSPData_values[i][2]),2) + (int)pow((TSPData_values[k][1] - 				TSPData_values[i][1]),2)));
+			TSPData[k][i] = (((unsigned int)pow((TSPData_values[CityIndex+1] - TSPData_values[eachCityIndex+1]),2) + 
+                 			  (unsigned int)pow((TSPData_values[CityIndex] - TSPData_values[eachCityIndex]),2)));
+
+			eachCityIndex += 2;
 		}
+		CityIndex += 2;
 	}
 }
 
