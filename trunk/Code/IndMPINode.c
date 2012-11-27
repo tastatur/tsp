@@ -26,30 +26,24 @@ void ProcessRoute(int* localPopulation, int numberOfTours,const int* coords)
     #pragma omp for
     for(tour = 0; tour < numberOfTours; tour++)
     {
-      /* printf("\nID IS %d" , tour); */
-      CheckValidity(localPopulation + numCities * tour, "Before Kernel");
       TSPSwapRun((int *)(localPopulation + numCities * tour) , (const int*)coords);
-      CheckValidity(localPopulation + numCities * tour, "After Kernel");
       prevX = (coords + (2 * ((localPopulation + numCities*tour)[0])))[0]; 
       prevY = (coords + (2 * ((localPopulation + numCities*tour)[0])))[1];
 
       for(i = 0; i < numCities; i++)
       {
         city = (localPopulation + numCities*tour)[i];
-        /* printf ("City %d " , city); */
         distance += (float)((coords + (city*2))[1] - prevY) * ((coords + (city*2))[1] - prevY)
                  +  (float)((coords + (city*2))[0] - prevX) * ((coords + (city*2))[0] - prevX);
         prevX = (coords + (city*2))[0];
         prevY = (coords + (city*2))[1];
       }
-	/* printf("\nfitness %d" , distance); */
 	fitness[tour] = distance;
     }
   }
 
   for ( i = 0 ; i < numberOfTours ; i ++ )
   {
-    /* printf("came in loop"); */
     if( fitness[i] < firstTourIndex.max ) {
     secondTourIndex.max = firstTourIndex.max;
     secondTourIndex.cityIndex = firstTourIndex.cityIndex;
@@ -62,18 +56,11 @@ void ProcessRoute(int* localPopulation, int numberOfTours,const int* coords)
   }
   
   populationStartIndex = 0;
- // for ( j = 0 ; j < numToursUpdated ; j++) {
   for ( i = 0 ; i < numCities ; i++ )
   {
-    /* CheckValidity(localPopulation + numCities*(populationStartIndex), "IndMpi0"); */
-    /* CheckValidity(localPopulation + numCities*(populationStartIndex + 1), "IndMpi1"); */
     (localPopulation + numCities*(populationStartIndex))[i] = (localPopulation + numCities*firstTourIndex.cityIndex)[i];
     (localPopulation + numCities*(populationStartIndex + 1))[i] = (localPopulation + numCities*secondTourIndex.cityIndex)[i];
   }
-  CheckValidity(localPopulation , "IndMpi0");
-  CheckValidity(localPopulation + numCities, "IndMpi1");
-  printf("Returning from openmp\n");
- // }
 }
 
 

@@ -30,8 +30,6 @@ void CheckValidity(int *tour, char *text)
     if(visited[tour[i]] == 1)
     {
       printf("ERROR:Invalid path generated:<%s>,city %d repeated\n" ,text, tour[i] );
-      //printTour(tour);
-      //showBackTrace();
       exit(0);
     }
     visited[tour[i]] = 1;
@@ -42,8 +40,6 @@ void CheckValidity(int *tour, char *text)
     if(visited[i] == 0)
     {
       printf("ERROR:Invalid path generated:<%s>, city %d not present\n", text, i);
-      //printTour(tour);
-      //showBackTrace();
       exit(0);
     }
   } 
@@ -137,19 +133,15 @@ void TSPSwapKernel (unsigned int n, int* completeTour, int* coords, unsigned int
       	prevY = (coords + (city * 2))[1];
       }
       
-      //fitnessMatrix[tidx][tidy] = distance;
-      //printf("%d(%d, %d) %f %f \n", bid, tidx, tidy, distance, distanceBackup);
       if(distance < distanceBackup)   //if new distance is lower than the old , reject.
       {
       	fitnessMatrix[tidx][tidy] = distance;
-	//distanceBackup = distance;
       }
     }
     
      __syncthreads();
 
     Min = INT_MAX;
-    //int currentMin = 0;
     
     if(threadIdx.x == 0 && threadIdx.y == 0) {
       for( i = 1 ; i < currentNumCities -1 ; i++ ) {
@@ -174,7 +166,6 @@ void TSPSwapKernel (unsigned int n, int* completeTour, int* coords, unsigned int
 	for(i = 0 ; i < currentNumCities; i++) {
 	  completeTour[offset + i] = globalTourThreads[i];
 	}
-	//printf("In termination loop for block:%d, counter:%d\n", bid, counter);
 	break;
       }
 
@@ -265,7 +256,6 @@ void TSPSwapRun(int* tour,const int* coords)
     coordsArray[(2 * i) + 1] = coords[(2 * i) + 1];
   }
 
-  // printf("CUDA PATH before KERNEL\n");
   for(int i = 0 ; i < NUM_CITIES; i++)
   {
      if(tour[i] == 0)
@@ -282,12 +272,6 @@ void TSPSwapRun(int* tour,const int* coords)
   
   copyKeysFromGPU(n, tour, tour_gpu);
 
-  printf("CUDA PATH after KERNEL\n");
-  for(int i = 0 ; i < NUM_CITIES; i++)
-  	printf("%d-", tour[i]);
-  printf("\n");
-  
-  CheckValidity(tour, "After Cuda Kernel");
   if(tour_gpu)
     cudaFree(tour_gpu);
   

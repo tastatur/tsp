@@ -54,6 +54,7 @@ int main(int argc , char **argv)
         MPI_Init(&argc, &argv);
         MPI_Comm_size(MPI_COMM_WORLD,&size);
         MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+
 	/* Initialize the initial population  */
 	int *initialPopulation;
 
@@ -118,15 +119,10 @@ int main(int argc , char **argv)
 					improveGlobalPopulation(initialPopulation , startRow , rowPerProc , dMat);
 				}
 			} /* End of parallel region */
-	//		printInitialPopulation(initialPopulation);
-	//		sleep(20);
-		printf("\n");
-		printTour(initialPopulation + startRow*NUM_CITIES);
-		printf("Fitness of Computed path %lf" , computeFitness(initialPopulation + startRow*NUM_CITIES, dMat));
-		printf("\n");
-		readActualPath(path,NULL,dMat);
 		}
 		/************************************************************************************************************/		
+
+		readActualPath(path, NULL, dMat); 
 
 		/* At last we have the most optimized tour */
   		//resultVerification(TSPData_coordinates);
@@ -147,13 +143,14 @@ int main(int argc , char **argv)
 			
 			/* Divide these tours among OpenMP threads */
 			ProcessRoute(initialPopulation,rowPerProc,TSPData_coordinates);
+
 			/* Find two most optimal tour across all OpenMP threads on this MPI mode and send to MASTER */
 			MPI_Isend(initialPopulation , NUM_CITIES * 2, MPI_INT , 0 , rank , MPI_COMM_WORLD , &reqStatus);
 			MPI_Waitall(1 , &reqStatus , &status);
 		}
-	
 		/************************************************************************************************************/		
 	}
+
         MPI_Finalize();
 	return 0;
 }

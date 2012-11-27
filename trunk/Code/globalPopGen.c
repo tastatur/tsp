@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include<string.h>
+#include <string.h>
 
 /* Function declaration */
 /*void printTour(int *t);
@@ -20,9 +20,9 @@ double computeFitness(int *tour , unsigned int ** dMat){
         CheckValidity(tour , "computefitness");
 	
 	for (i = 0 ; i < NUM_CITIES - 1 ; i++){
-		distance += dMat[tour[i]][tour[i+1]];
+		distance += dMat[tour[i] - 1][tour[i+1] - 1];
 		}
-	distance += dMat[tour[0]][tour[NUM_CITIES - 1]];
+	distance += dMat[tour[0] - 1][tour[NUM_CITIES - 1] - 1];
 	return distance;
 }
 
@@ -60,26 +60,29 @@ int * GenerateInitPopulation(unsigned int** dMat)
 void printTour(int *t)
 {
   int i;
-  for(i = 0; i < NUM_CITIES; i++)
-    printf("%d-", t[i]);
   printf("\n");
+
+  for(i = 0; i < NUM_CITIES; i++)
+  	printf("%d-", t[i]);
 }
 
 void showBackTrace() 
 { 
   const int maxbtsize = 50; 
   int btsize;
-   void* bt[maxbtsize];
-   char** strs = 0; 
+  void* bt[maxbtsize];
+  char** strs = 0; 
   int i = 0; 
+
   btsize = backtrace(bt, maxbtsize); 
   strs = backtrace_symbols(bt, btsize);
-   for (i = 0; i < btsize; i += 1)
-   {
-    printf("%d.) %s\n", i, strs[i]); 
-   }
-   free(strs);
-    
+
+  for (i = 0; i < btsize; i += 1)
+  {
+  	printf("%d.) %s\n", i, strs[i]); 
+  }
+
+  free(strs);  
 }
 
 void GenerateTour(int initialCity, int* tourPointer, unsigned int** dMat)
@@ -170,32 +173,38 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 
 	char ch = 'u';
 
-	firstPath = (int **)malloc(sizeof(int *) * NUM_CITIES);
-	secondPath = (int **)malloc(sizeof(int *) * NUM_CITIES);
+	firstPath = (int **)malloc(sizeof(int *) * (NUM_CITIES + 1));
+	secondPath = (int **)malloc(sizeof(int *) * (NUM_CITIES + 1));
 
 	int * globalPopPool = (int *)malloc(sizeof(int) * NUM_CITIES);
-	char * status = (char * )malloc(sizeof(char) * (NUM_CITIES + 2));
+	char * status = (char * )malloc(sizeof(char) * (NUM_CITIES + 1));
 
 	int curLoc , flag, offset , pos , temp , buf;
 	unsigned int distanceMin ;
 
-	for (i = 0 ; i < NUM_CITIES ; i++){
+	for (i = 0 ; i <= NUM_CITIES ; i++){
 		firstPath[i] = (int *)malloc(sizeof(int) * 2);
+		firstPath[i][0] = firstPath[0][1] = -1;
+
 		secondPath[i] = (int *)malloc(sizeof(int) * 2);
+		secondPath[i][0] = secondPath[i][1] = -1;
 	}
 	
 	/* Make temporary copy of most fit solutions */
 	memcpy(dad , &initialPopulation[startRow * NUM_CITIES] , NUM_CITIES * sizeof(int)) ;
 	memcpy(mom , &initialPopulation[(startRow  + 1 ) * NUM_CITIES] , NUM_CITIES * sizeof(int)) ;	
 
-	CheckValidity(&initialPopulation[startRow * NUM_CITIES], "gpgt1");
-	CheckValidity(&initialPopulation[(startRow + 1) * NUM_CITIES], "gpgt2");
+	CheckValidity(dad , "Dad");
+	CheckValidity(mom , "Mom");
+
+	printf("Dad");		printTour(dad); 	printf("\t");		printf("Fitness : %0.2lf" , computeFitness(dad , dMat));
+	printf("Mom");		printTour(mom);		printf("\t");		printf("Fitness : %0.2lf" , computeFitness(mom , dMat));
 
 	/* Special cases */	
-	firstPath[dad[0] - 1][1] = -1;
-	secondPath[mom[0] - 1][1] = -1;
-	firstPath[dad[0] - 1][0] = dad[1];
-	secondPath[mom[0] - 1][0] = mom[1];
+	firstPath[dad[0]][1] = -1;
+	secondPath[mom[0]][1] = -1;
+	firstPath[dad[0]][0] = dad[1];
+	secondPath[mom[0]][0] = mom[1];
 
 	firstPath[dad[NUM_CITIES - 1]][0] = -1;
 	secondPath[mom[NUM_CITIES - 1]][0] = -1;
@@ -203,22 +212,24 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 	secondPath[mom[NUM_CITIES - 1]][1] = mom[NUM_CITIES - 2];
 
 	for (i = 1 ; i < NUM_CITIES - 1 ; i++){
-		firstPath[dad[i] - 1][0] = dad[i+1];
-		secondPath[mom[i] - 1][0] = mom[i+1];
-		firstPath[dad[i] - 1][1] = dad[i-1];
-		secondPath[mom[i] - 1][1] = mom[i-1];
+		firstPath[dad[i]][0] = dad[i+1];
+		secondPath[mom[i]][0] = mom[i+1];
+		firstPath[dad[i]][1] = dad[i-1];
+		secondPath[mom[i]][1] = mom[i-1];
 	}
-	
-	/* for (i = 0 ; i < NUM_CITIES ; i++){
+
+	/* 	
+	for (i = 1 ; i <= NUM_CITIES ; i++){
 		printf("\n\t%d)\t%d %d \t\t%d %d", i , firstPath[i][0] , firstPath[i][1]  ,secondPath[i][0] , secondPath[i][1]);
-	}*/
+	} */
 	
 	curLoc = 0;
 	flag = 0;
 
 	for (i = 0 ; i < NUM_CITIES ; i++)
 	{
-		if ( (firstPath[dad[i] - 1][0] == secondPath[dad[i] - 1][0]) || (firstPath[dad[i] -1 ][0] == secondPath[dad[i] - 1][1]) )	
+		if ( ( firstPath[dad[i]][0] != -1) && 
+		     ((firstPath[dad[i]][0] == secondPath[dad[i]][0]) || (firstPath[dad[i]][0] == secondPath[dad[i]][1])) )	
 		{
 			if (!flag){
 				globalPopPool[curLoc++] = dad[i];
@@ -229,11 +240,12 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 			globalPopPool[curLoc++] = dad[i];
 			flag = 0;
 		}
-	}
+	} 
 
 	for (i = 0 ; i < offSpringCount ; i++) {
+		
 		/* To optimize */
-		for (k = 0 ; k < NUM_CITIES ; k++)
+		for (k = 0 ; k <= NUM_CITIES ; k++)
 			status[k] = 'u';
 
 		initialPopulation[(startRow + i) * NUM_CITIES] = globalPopPool[rand_int(curLoc)];
@@ -242,8 +254,9 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 		status[temp] = 'v';
 		
 		while(offset < NUM_CITIES) {	
-		        temp--;
-			if ( (status[firstPath[temp][0]] == 'u') && ((firstPath[temp][0] == secondPath[temp][0]) || (firstPath[temp][0] == secondPath[temp][1]) ))
+		        if ( (firstPath[temp][0] != -1 ) && 
+			     (status[firstPath[temp][0]] == 'u') && 
+			     (( firstPath[temp][0] == secondPath[temp][0]) || (firstPath[temp][0] == secondPath[temp][1]) ))
                 	{
                                 initialPopulation[(startRow + i) * NUM_CITIES + offset] = firstPath[temp][0]; 
 				temp = firstPath[temp][0];
@@ -255,7 +268,7 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 				distanceMin = INT_MAX;
 				pos = 0;
 				for ( k = 0 ; k < curLoc ; k++ ) {
-					buf = dMat[temp][globalPopPool[k]];
+					buf = dMat[temp-1][globalPopPool[k]-1];
 					if(status[globalPopPool[k]] == 'u' && buf < distanceMin) {
 						distanceMin = buf;
 						pos = k;
@@ -267,16 +280,20 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 				status[temp] = 'v';
 			}	
 			offset += 1;
-		}
+		} 
+		
+		/******************************************** Tour Statistics *******************************/
+		CheckValidity(&initialPopulation[(startRow + i) * NUM_CITIES] , "New population Generation");
+		printf("\nTour %d :" , i);		
+		printTour(&initialPopulation[(startRow + i) * NUM_CITIES]);	
+		printf("\tFitness : %0.2lf" , computeFitness(&initialPopulation[(startRow + i) * NUM_CITIES] , dMat));
+		/********************************************************************************************/
 	}
 	  	
 	free(firstPath);
 	free(secondPath);	
-	
-	printf("\nStart Row : %d , Fitness of DAD  %lf",startRow, computeFitness(dad, dMat));
-	printf("\nStart Row : %d , Fitness of MOM %lf" , startRow , computeFitness(mom, dMat));	
-	
-	
+	free(globalPopPool);
+	free(status);	
 	free(dad);
 	free(mom);
 }
