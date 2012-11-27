@@ -17,6 +17,38 @@ static void check_gpu__ (const char* file, size_t line, const char* msg)
   }
 }
 
+void CheckValidity(int *tour, char *text)
+{
+  int visited[NUM_CITIES + 1];
+  int i;
+  
+  for(i = 0; i <= NUM_CITIES; i++)
+    visited[i] = 0;
+
+  for(i = 0; i < NUM_CITIES; i++)
+  {
+    if(visited[tour[i]] == 1)
+    {
+      printf("ERROR:Invalid path generated:<%s>,city %d repeated\n" ,text, tour[i] );
+      //printTour(tour);
+      //showBackTrace();
+      exit(0);
+    }
+    visited[tour[i]] = 1;
+  }
+
+  for(i = 1; i <= NUM_CITIES; i++)
+  {
+    if(visited[i] == 0)
+    {
+      printf("ERROR:Invalid path generated:<%s>, city %d not present\n", text, i);
+      //printTour(tour);
+      //showBackTrace();
+      exit(0);
+    }
+  } 
+}
+
 __global__
 void TSPSwapKernel (unsigned int n, int* completeTour, int* coords, unsigned int loops)
 {
@@ -233,11 +265,11 @@ void TSPSwapRun(int* tour,const int* coords)
     coordsArray[(2 * i) + 1] = coords[(2 * i) + 1];
   }
 
-  printf("CUDA PATH before KERNEL\n");
+  // printf("CUDA PATH before KERNEL\n");
   for(int i = 0 ; i < NUM_CITIES; i++)
   {
      if(tour[i] == 0)
-	printf("PANIC: zero city passed\n");
+  	printf("PANIC: zero city passed\n");
   }
  
   copyKeysToGPU (n,tour_gpu, tour);
@@ -252,8 +284,10 @@ void TSPSwapRun(int* tour,const int* coords)
 
   printf("CUDA PATH after KERNEL\n");
   for(int i = 0 ; i < NUM_CITIES; i++)
-	printf("%d-", tour[i]);
+  	printf("%d-", tour[i]);
   printf("\n");
+  
+  CheckValidity(tour, "After Cuda Kernel");
   if(tour_gpu)
     cudaFree(tour_gpu);
   
