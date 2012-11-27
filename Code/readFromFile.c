@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 int * readDataFromFile(char *path, unsigned int **TSPData)
 {
 	int city_index = 0, num , i;
@@ -37,10 +38,11 @@ int * readDataFromFile(char *path, unsigned int **TSPData)
 	return TSPData_values;
 }
 
-void readActualPath(char *path, int* correctPath)
+void readActualPath(char *path, int *correctPath1 ,unsigned int **dMat)
 {
-        FILE *fin = fopen(path, "r");
-	int k = 0, num;
+ 	int *correctPath = (int*)malloc(sizeof(int)*NUM_CITIES);
+        FILE *fin = fopen("OPTTSP48", "r");
+	int k = 0,i , num;
 
         if (fin == NULL)
         {
@@ -48,11 +50,16 @@ void readActualPath(char *path, int* correctPath)
                getchar();
                exit(1);
         }
-	
         while (fscanf(fin , "%d" , &num) != EOF)
         {
                correctPath[k] = num;
+	       k++;
 	}
+	for (i = 0 ; i < NUM_CITIES ; i++)
+		printf("%d\n" , correctPath[i]);
+	printf("Fitness of Actual Path %lf" , computeFitness(correctPath, dMat));
+        printf("\n");
+	
 	fclose(fin);
 }
 
@@ -62,7 +69,8 @@ void make2DArray(unsigned int **TSPData , int *TSPData_values)
 	
 	for ( k = 0 ; k < NUM_CITIES ; k++) {
 		eachCityIndex = 0;
-		for ( i = 0 ; i<NUM_CITIES ; i++) {
+		//change the way TSPData is calculated (for out of order sequence )
+		for ( i = 0 ; i<NUM_CITIES ; i++) { 
 			TSPData[k][i] = (((unsigned int)pow((TSPData_values[CityIndex+1] - TSPData_values[eachCityIndex+1]),2) + 
                  			  (unsigned int)pow((TSPData_values[CityIndex] - TSPData_values[eachCityIndex]),2)));
 

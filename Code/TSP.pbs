@@ -12,7 +12,7 @@ cat $PBS_NODEFILE
 echo -e "\n\n"
 
 # Run the program
-mpirun --hostfile $PBS_NODEFILE -np 10 ./TSP
+mpirun --hostfile $PBS_NODEFILE -np 4 ./TSP
 
 echo "*** COMPLETED: `date` on `hostname` ***"
 

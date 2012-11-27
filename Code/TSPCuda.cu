@@ -117,7 +117,7 @@ void TSPSwapKernel (unsigned int n, int* completeTour, int* coords, unsigned int
      __syncthreads();
 
     Min = INT_MAX;
-    int currentMin = 0;
+    //int currentMin = 0;
     
     if(threadIdx.x == 0 && threadIdx.y == 0) {
       for( i = 1 ; i < currentNumCities -1 ; i++ ) {
@@ -233,6 +233,13 @@ void TSPSwapRun(int* tour,const int* coords)
     coordsArray[(2 * i) + 1] = coords[(2 * i) + 1];
   }
 
+  printf("CUDA PATH before KERNEL\n");
+  for(int i = 0 ; i < NUM_CITIES; i++)
+  {
+     if(tour[i] == 0)
+	printf("PANIC: zero city passed\n");
+  }
+ 
   copyKeysToGPU (n,tour_gpu, tour);
   copyDMatToGPU(n, coords_gpu, coords);
 
@@ -242,10 +249,11 @@ void TSPSwapRun(int* tour,const int* coords)
   cudaDeviceSynchronize();
   
   copyKeysFromGPU(n, tour, tour_gpu);
-  for(int i = 0; i < n; i++)
-    printf("%d ", tour[i]);
-  printf("\n");
 
+  printf("CUDA PATH after KERNEL\n");
+  for(int i = 0 ; i < NUM_CITIES; i++)
+	printf("%d-", tour[i]);
+  printf("\n");
   if(tour_gpu)
     cudaFree(tour_gpu);
   
@@ -253,7 +261,7 @@ void TSPSwapRun(int* tour,const int* coords)
     cudaFree(coords_gpu);
 }
 
-int main()
+/*int main()
 {
   int tour[NUM_CITIES] = {0, 2, 1 ,3, 4, 6,5, 7, 8, 10, 9, 11, 12, 14, 13, 15, 16};
   int* coords = (int*)malloc(2 * NUM_CITIES * sizeof(int *));
@@ -264,4 +272,4 @@ int main()
     coords[(2 * i) + 1] = i;
   }
   TSPSwapRun((int *)tour, (const int*)coords);
-}
+}*/

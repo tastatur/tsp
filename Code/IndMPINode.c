@@ -27,9 +27,11 @@ void ProcessRoute(int* localPopulation, int numberOfTours,const int* coords)
     for(tour = 0; tour < numberOfTours; tour++)
     {
       /* printf("\nID IS %d" , tour); */
+      CheckValidity(localPopulation + numCities * tour, "Before Kernel");
       TSPSwapRun((int *)(localPopulation + numCities*tour) , (const int*)coords);
-      prevX = (coords + (2 * (localPopulation + numCities*tour)[0]))[0]; 
-      prevY = (coords + (2 * (localPopulation + numCities*tour)[0]))[1];
+      CheckValidity(localPopulation + numCities*tour, "After Kernel");
+      prevX = (coords + (2 * ((localPopulation + numCities*tour)[0])))[0]; 
+      prevY = (coords + (2 * ((localPopulation + numCities*tour)[0])))[1];
 
       for(i = 0; i < numCities; i++)
       {
@@ -58,21 +60,23 @@ void ProcessRoute(int* localPopulation, int numberOfTours,const int* coords)
       secondTourIndex.max = fitness[i];
       secondTourIndex.cityIndex = i;}
   }
-  /* printf("firsMax %d " , firstMax); */
-  /* printf("secondMax %d " , secondMax); */
+ //  printf("\nfirsMax %d " , firstTourIndex.cityIndex); 
+ //  printf("\nsecondMax %d " , secondTourIndex.cityIndex); 
   
   populationStartIndex = 0;
-  for ( j = 0 ; j < numToursUpdated ; j++) {
+ // for ( j = 0 ; j < numToursUpdated ; j++) {
   for ( i = 0 ; i < numCities ; i++ )
   {
-    (localPopulation + numCities*(populationStartIndex + j))[i] = (localPopulation + numCities*firstTourIndex.cityIndex)[i];
-    /* (localPopulation + numCities*(populationStartIndex + 1))[i] = (localPopulation + numCities*secondTourIndex)[i]; */
+    CheckValidity(localPopulation + numCities*(populationStartIndex), "IndMpi");
+    CheckValidity(localPopulation + numCities*(populationStartIndex + 1), "IndMpi");
+    (localPopulation + numCities*(populationStartIndex))[i] = (localPopulation + numCities*firstTourIndex.cityIndex)[i];
+    (localPopulation + numCities*(populationStartIndex + 1))[i] = (localPopulation + numCities*secondTourIndex.cityIndex)[i];
   }
-  }
+ // }
 }
 
 
-int main()
+/*int main()
 {
   int i;
   int tour[NUM_CITIES] = {0, 2, 1 ,3, 4, 6,5, 7, 8, 10, 9, 11, 12, 14, 13, 15 , 16};
@@ -87,7 +91,7 @@ int main()
   for(i = 0; i < NUM_CITIES; i++)
     printf("%d ", tour[i]);
   printf("\n");
-}
+}*/
 
 
 
