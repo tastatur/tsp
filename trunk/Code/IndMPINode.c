@@ -28,8 +28,8 @@ void ProcessRoute(int* localPopulation, int numberOfTours,const int* coords)
     {
       /* printf("\nID IS %d" , tour); */
       CheckValidity(localPopulation + numCities * tour, "Before Kernel");
-      TSPSwapRun((int *)(localPopulation + numCities*tour) , (const int*)coords);
-      CheckValidity(localPopulation + numCities*tour, "After Kernel");
+      TSPSwapRun((int *)(localPopulation + numCities * tour) , (const int*)coords);
+      CheckValidity(localPopulation + numCities * tour, "After Kernel");
       prevX = (coords + (2 * ((localPopulation + numCities*tour)[0])))[0]; 
       prevY = (coords + (2 * ((localPopulation + numCities*tour)[0])))[1];
 
@@ -60,18 +60,19 @@ void ProcessRoute(int* localPopulation, int numberOfTours,const int* coords)
       secondTourIndex.max = fitness[i];
       secondTourIndex.cityIndex = i;}
   }
- //  printf("\nfirsMax %d " , firstTourIndex.cityIndex); 
- //  printf("\nsecondMax %d " , secondTourIndex.cityIndex); 
   
   populationStartIndex = 0;
  // for ( j = 0 ; j < numToursUpdated ; j++) {
   for ( i = 0 ; i < numCities ; i++ )
   {
-    CheckValidity(localPopulation + numCities*(populationStartIndex), "IndMpi");
-    CheckValidity(localPopulation + numCities*(populationStartIndex + 1), "IndMpi");
+    /* CheckValidity(localPopulation + numCities*(populationStartIndex), "IndMpi0"); */
+    /* CheckValidity(localPopulation + numCities*(populationStartIndex + 1), "IndMpi1"); */
     (localPopulation + numCities*(populationStartIndex))[i] = (localPopulation + numCities*firstTourIndex.cityIndex)[i];
     (localPopulation + numCities*(populationStartIndex + 1))[i] = (localPopulation + numCities*secondTourIndex.cityIndex)[i];
   }
+  CheckValidity(localPopulation , "IndMpi0");
+  CheckValidity(localPopulation + numCities, "IndMpi1");
+  printf("Returning from openmp\n");
  // }
 }
 
