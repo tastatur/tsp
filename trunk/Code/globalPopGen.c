@@ -48,10 +48,10 @@ int * GenerateInitPopulation(unsigned int** dMat)
 
   int *initialPopulation = (int *)malloc(sizeof(int) * NUM_CITIES * NUM_CITIES) ;
 
-  for(city = 1; city <= NUM_CITIES; city++)
+  for(city ; city < NUM_CITIES; city++)
   {
-     GenerateTour(city, &initialPopulation[(city - 1) * NUM_CITIES], dMat);
-     CheckValidity(&initialPopulation[(city - 1) * NUM_CITIES] , "init");
+     GenerateTour(city + 1, &initialPopulation[city  * NUM_CITIES], dMat);
+     CheckValidity(&initialPopulation[city  * NUM_CITIES] , "init");
   }
 
   return initialPopulation;
@@ -85,10 +85,10 @@ void showBackTrace()
 void GenerateTour(int initialCity, int* tourPointer, unsigned int** dMat)
 {
   int i;
-  int visited[NUM_CITIES];
+  int visited[NUM_CITIES + 1];
   int currentCity , nextCity;
 
-  for(i = 0; i < NUM_CITIES; i++)
+  for(i = 0; i <= NUM_CITIES; i++)
     visited[i] = 0;
   
   tourPointer[0] = initialCity;
@@ -111,9 +111,9 @@ int GetNearestCity(int currCity, unsigned int** dMat, int* visited)
   unsigned int distance = INT_MAX;
   for(i = 0 ; i < NUM_CITIES; i++)
   {
-    if(dMat[currCity][i] < distance && visited[i] == 0)
+    if(dMat[currCity - 1][i] < distance && visited[i + 1] == 0)
     {
-      distance = dMat[currCity][i];
+      distance = dMat[currCity - 1][i];
       nextCity = i + 1;
     }
   }
@@ -138,7 +138,7 @@ void CheckValidity(int *tour, char *text)
   {
     if(visited[tour[i]] == 1)
     {
-      printf("ERROR:Invalid path generated:1, %s, %d \n" ,text, tour[i] );
+      printf("ERROR:Invalid path generated:<%s>,city %d repeated\n" ,text, tour[i] );
       printTour(tour);
       showBackTrace();
       exit(0);
@@ -150,7 +150,7 @@ void CheckValidity(int *tour, char *text)
   {
     if(visited[i] == 0)
     {
-      printf("ERROR:Invalid path generated:2, %s, %d\n", text, i);
+      printf("ERROR:Invalid path generated:<%s>, city %d not present\n", text, i);
       printTour(tour);
       showBackTrace();
       exit(0);
@@ -174,7 +174,7 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 	secondPath = (int **)malloc(sizeof(int *) * NUM_CITIES);
 
 	int * globalPopPool = (int *)malloc(sizeof(int) * NUM_CITIES);
-	char * status = (char * )malloc(sizeof(char) * NUM_CITIES + 1);
+	char * status = (char * )malloc(sizeof(char) * (NUM_CITIES + 2));
 
 	int curLoc , flag, offset , pos , temp , buf;
 	unsigned int distanceMin ;
@@ -188,11 +188,14 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 	memcpy(dad , &initialPopulation[startRow * NUM_CITIES] , NUM_CITIES * sizeof(int)) ;
 	memcpy(mom , &initialPopulation[(startRow  + 1 ) * NUM_CITIES] , NUM_CITIES * sizeof(int)) ;	
 
+	CheckValidity(&initialPopulation[startRow * NUM_CITIES], "gpgt1");
+	CheckValidity(&initialPopulation[(startRow + 1) * NUM_CITIES], "gpgt2");
+
 	/* Special cases */	
-	firstPath[dad[0]][1] = -1;
-	secondPath[mom[0]][1] = -1;
-	firstPath[dad[0]][0] = dad[1];
-	secondPath[mom[0]][0] = mom[1];
+	firstPath[dad[0] - 1][1] = -1;
+	secondPath[mom[0] - 1][1] = -1;
+	firstPath[dad[0] - 1][0] = dad[1];
+	secondPath[mom[0] - 1][0] = mom[1];
 
 	firstPath[dad[NUM_CITIES - 1]][0] = -1;
 	secondPath[mom[NUM_CITIES - 1]][0] = -1;
@@ -200,10 +203,10 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 	secondPath[mom[NUM_CITIES - 1]][1] = mom[NUM_CITIES - 2];
 
 	for (i = 1 ; i < NUM_CITIES - 1 ; i++){
-		firstPath[dad[i]][0] = dad[i+1];
-		secondPath[mom[i]][0] = mom[i+1];
-		firstPath[dad[i]][1] = dad[i-1];
-		secondPath[mom[i]][1] = mom[i-1];
+		firstPath[dad[i] - 1][0] = dad[i+1];
+		secondPath[mom[i] - 1][0] = mom[i+1];
+		firstPath[dad[i] - 1][1] = dad[i-1];
+		secondPath[mom[i] - 1][1] = mom[i-1];
 	}
 	
 	/* for (i = 0 ; i < NUM_CITIES ; i++){
@@ -215,7 +218,7 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 
 	for (i = 0 ; i < NUM_CITIES ; i++)
 	{
-		if ( (firstPath[dad[i]][0] == secondPath[dad[i]][0]) || (firstPath[dad[i]][0] == secondPath[dad[i]][1]) )	
+		if ( (firstPath[dad[i] - 1][0] == secondPath[dad[i] - 1][0]) || (firstPath[dad[i] -1 ][0] == secondPath[dad[i] - 1][1]) )	
 		{
 			if (!flag){
 				globalPopPool[curLoc++] = dad[i];
@@ -235,10 +238,11 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 
 		initialPopulation[(startRow + i) * NUM_CITIES] = globalPopPool[rand_int(curLoc)];
 		offset = 1;
-		temp = initialPopulation[(startRow + i) * NUM_CITIES];
+		temp = initialPopulation[(startRow + i) * NUM_CITIES] ;
 		status[temp] = 'v';
 		
 		while(offset < NUM_CITIES) {	
+		        temp--;
 			if ( (status[firstPath[temp][0]] == 'u') && ((firstPath[temp][0] == secondPath[temp][0]) || (firstPath[temp][0] == secondPath[temp][1]) ))
                 	{
                                 initialPopulation[(startRow + i) * NUM_CITIES + offset] = firstPath[temp][0]; 
