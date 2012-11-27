@@ -54,7 +54,6 @@ int main(int argc , char **argv)
         MPI_Init(&argc, &argv);
         MPI_Comm_size(MPI_COMM_WORLD,&size);
         MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-
 	/* Initialize the initial population  */
 	int *initialPopulation;
 
@@ -102,15 +101,16 @@ int main(int argc , char **argv)
 			/* Wait to receive the best two tours from all worker MPI nodes */
 			for (i = 0 ; i < size - 1 ; i++){
 				startRow = (i == 0) ? 0 : tourCountOnNode[i - 1];
-				MPI_Irecv(&initialPopulation[startRow] , NUM_CITIES * 2 , MPI_INT , i+1 , i+1 , MPI_COMM_WORLD , &request[i]);
+				MPI_Irecv(&initialPopulation[startRow *NUM_CITIES] , NUM_CITIES * 2 , MPI_INT , i+1 , i+1 , MPI_COMM_WORLD , &request[i]);
 			}
 
 			/* Wait till all nodes send their best solutions */
 			MPI_Waitall(size - 1 , request, rStatus);
-			
+
 			/* Now improve these tours n parallel to generate a global population of improved tours */
 			# pragma omp parallel default (shared) private(rowPerProc , startRow) shared(i, size, tourCountOnNode, initialPopulation) num_threads(size - 1)
 			{ 
+				#pragma omp for
 				for (i = 0 ; i < size - 1 ; i++)
 				{	
 					rowPerProc = (i == 0) ? tourCountOnNode[i] : (tourCountOnNode[i] - tourCountOnNode[i-1]);
@@ -120,6 +120,11 @@ int main(int argc , char **argv)
 			} /* End of parallel region */
 	//		printInitialPopulation(initialPopulation);
 	//		sleep(20);
+		printf("\n");
+		printTour(initialPopulation + startRow*NUM_CITIES);
+		printf("Fitness of Computed path %lf" , computeFitness(initialPopulation + startRow*NUM_CITIES, dMat));
+		printf("\n");
+		readActualPath(path,NULL,dMat);
 		}
 		/************************************************************************************************************/		
 
@@ -141,8 +146,7 @@ int main(int argc , char **argv)
 			MPI_Recv(initialPopulation , NUM_CITIES * rowPerProc , MPI_INT , 0 , 1 , MPI_COMM_WORLD , &status);
 			
 			/* Divide these tours among OpenMP threads */
-			// ProcessRoute(initialPopulation,rowPerProc,TSPData_coordinates);
-
+			ProcessRoute(initialPopulation,rowPerProc,TSPData_coordinates);
 			/* Find two most optimal tour across all OpenMP threads on this MPI mode and send to MASTER */
 			MPI_Isend(initialPopulation , NUM_CITIES * 2, MPI_INT , 0 , rank , MPI_COMM_WORLD , &reqStatus);
 			MPI_Waitall(1 , &reqStatus , &status);

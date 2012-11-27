@@ -10,6 +10,15 @@ typedef float distanceMatrix[NUM_CITIES][NUM_CITIES]; // Matrix holding the dist
 
 char *pathName;
 
+void printTour(int *t);
+void CheckValidity(int *tour, char* text);
+int GetNearestCity(int currCity, unsigned int** dMat, int* visited);
+void GenerateTour(int initialCity, int* tourPointer, unsigned int** dMat);
+int * GenerateInitPopulation(unsigned int **dMat);
+void improveGlobalPopulation(int *, int, int, unsigned int**);
+double computeFitness(int * , unsigned int **);
+
+#define numToursUpdated 2
 #define pathString "TSPData.txt"
 #define outPathComputed "TSPComputed.dat"
 #define outPathActual "TSPActual.dat"
@@ -19,7 +28,7 @@ char *pathName;
 #define numberOfDivisions  4
 #define cudaThreadBlocks = 4
 #define cudaThreadsPerBlock = 16
-#define globalIter 1
+#define globalIter 15
 #define localIter 10
 #define BLOCKSIZE NUM_CITIES //* NUM_CITIES ;  /* threads per block */
 #define NUM_BLOCKS 4;   
