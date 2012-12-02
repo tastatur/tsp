@@ -43,8 +43,8 @@ int main(int argc , char **argv)
   	unsigned int **dMat;
   	int *TSPData_coordinates;
   	char *path = (char *)malloc(sizeof(char) * pathLen);
-	struct stopwatch_t * timer = NULL;
-	long double commTime;
+	struct stopwatch_t * timer = NULL, *gTimer = NULL;
+	long double commTime, gCommTime;
 
         /* Initialize the MPI communication world */
         int  rank, size;
@@ -64,6 +64,7 @@ int main(int argc , char **argv)
 	/* Timers */
 	stopwatch_init();
 	timer = stopwatch_create();
+	gTimer = stopwatch_create();
 			
   	if(rank == 0){
 		dMat = (unsigned int **)malloc(sizeof(unsigned int *) * NUM_CITIES);
@@ -83,6 +84,8 @@ int main(int argc , char **argv)
 		request = (MPI_Request *) malloc(sizeof(MPI_Request) * (size - 1));
 		rStatus = (MPI_Status *) malloc(sizeof(MPI_Status) * (size - 1));
 	
+		stopwatch_start(gTimer);
+	
 		/******************************* This will be executed on MASTER for fixed number of global iterations ****************/
 		for (gIter = 0 ; gIter < globalIter ; gIter++){
 		
@@ -95,11 +98,11 @@ int main(int argc , char **argv)
 				MPI_Send(&initialPopulation[startRow*NUM_CITIES] ,  rowPerProc * NUM_CITIES , MPI_INT, i + 1 , 1 , MPI_COMM_WORLD);
 			}
 			commTime = stopwatch_stop(timer);
-	
-			printf("\nThroughput : %lf" , (double)(NUM_CITIES * NUM_CITIES * sizeof(int)) / ((double)1048576 * commTime));
-			printf("\nTimer value is : %Lg" , commTime);
+			double commT = (double)commTime;	
+			printf("\nThroughput after Send by Rank 0 : %lf" , (double)(NUM_CITIES * NUM_CITIES * sizeof(int)) / ((double)1048576 * commT));
 
 			/* Wait to receive the best two tours from all worker MPI nodes */
+			stopwatch_start(timer);
 			for (i = 0 ; i < size - 1 ; i++){
 				startRow = (i == 0) ? 0 : tourCountOnNode[i - 1];
 				MPI_Irecv(&initialPopulation[startRow *NUM_CITIES] , NUM_CITIES * 2 , MPI_INT , i+1 , i+1 , MPI_COMM_WORLD , &request[i]);
@@ -107,8 +110,11 @@ int main(int argc , char **argv)
 
 			/* Wait till all nodes send their best solutions */
 			MPI_Waitall(size - 1 , request, rStatus);
-
+			commTime = stopwatch_stop(timer);
+			printf("\nLatency/Wait time for Node 0  : %Lg", commTime );
+			
 			/* Now improve these tours n parallel to generate a global population of improved tours */
+			stopwatch_start(timer);
 			# pragma omp parallel default (shared) private(rowPerProc , startRow) shared(i, size, tourCountOnNode, initialPopulation) num_threads(size - 1)
 			{ 
 				#pragma omp for
@@ -119,12 +125,16 @@ int main(int argc , char **argv)
 					improveGlobalPopulation(initialPopulation , startRow , rowPerProc , dMat);
 				}
 			} /* End of parallel region */
+			commTime = stopwatch_stop(timer);
+			printf("\nTime to improve global population by Node 0 : %Lg" , commTime);
 		}
-		/************************************************************************************************************/		
 
-		readActualPath(path, NULL, dMat); 
+		/************************************************************************************************************/		
+		gCommTime = stopwatch_stop(gTimer);
+		printf("\nTime for global population improvement after global iterations by Node 0 %Lg" , gCommTime);
 
 		/* At last we have the most optimized tour */
+	  	readActualPath(path, NULL, dMat); 
   		//resultVerification(TSPData_coordinates);
 	}
 	else{
@@ -134,7 +144,7 @@ int main(int argc , char **argv)
 
 		/* Receive the coordinates */
 		MPI_Bcast(TSPData_coordinates , NUM_CITIES * 2 , MPI_INT, 0,  MPI_COMM_WORLD);	
-		
+		stopwatch_start(gTimer);
 		/******************************* This will be executed on WORKERS for fixed number of global iterations ****************/
 		for (gIter = 0 ; gIter < globalIter  ; gIter++){
 			
@@ -142,12 +152,17 @@ int main(int argc , char **argv)
 			MPI_Recv(initialPopulation , NUM_CITIES * rowPerProc , MPI_INT , 0 , 1 , MPI_COMM_WORLD , &status);
 			
 			/* Divide these tours among OpenMP threads */
+			stopwatch_start(timer);
 			ProcessRoute(initialPopulation,rowPerProc,TSPData_coordinates);
+			commTime = stopwatch_stop(timer);
+			printf("\nTime taken for %d local iterations at Rank %d : %Lg" , localIter , rank , commTime);			
 
 			/* Find two most optimal tour across all OpenMP threads on this MPI mode and send to MASTER */
 			MPI_Isend(initialPopulation , NUM_CITIES * 2, MPI_INT , 0 , rank , MPI_COMM_WORLD , &reqStatus);
 			MPI_Waitall(1 , &reqStatus , &status);
 		}
+		gCommTime = stopwatch_stop(gTimer);
+		printf("\nTime for global population improvement by Node %d : %Lg", gCommTime);
 		/************************************************************************************************************/		
 	}
 

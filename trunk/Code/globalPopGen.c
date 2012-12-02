@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
-
+#include <x86intrin.h>
 /* Function declaration */
-/*void printTour(int *t);
+/* void printTour(int *t);
 void CheckValidity(int *tour, char* text);
 int GetNearestCity(int currCity, unsigned int** dMat, int* visited);
 void GenerateTour(int initialCity, int* tourPointer, unsigned int** dMat);
@@ -15,14 +15,60 @@ double computeFitness(int * , unsigned int **);
 */
 
 double computeFitness(int *tour , unsigned int ** dMat){
-	int i;
+	int i,j;
 	double distance = 0.0;
-        CheckValidity(tour , "computefitness");
+//        CheckValidity(tour , "computefitness");
 	
 	for (i = 0 ; i < NUM_CITIES - 1 ; i++){
 		distance += dMat[tour[i] - 1][tour[i+1] - 1];
 		}
 	distance += dMat[tour[0] - 1][tour[NUM_CITIES - 1] - 1];
+
+//	printf("\nDistance sequential is : %lf" , distance);
+//	return distance;
+
+/*
+	int a[4] , b[4];
+	__m128i sumOne;
+	__m128i sumTwo;
+	__m128i result;
+
+	sumOne = _mm_setzero_si128();
+	sumTwo = _mm_setzero_si128();
+	result = _mm_setzero_si128();
+
+	distance = 0.0;
+
+	for (i = NUM_CITIES - 1; i >= 8 ; i=i-8)
+	{
+		a[0] = dMat[tour[i] - 1][tour[i-1] - 1];	
+		a[1] = dMat[tour[i-1] - 1][tour[i-2] - 1];
+		a[2] = dMat[tour[i-2] - 1][tour[i-3] - 1];
+		a[3] = dMat[tour[i-3] - 1][tour[i-4] - 1];
+	
+		b[0] = dMat[tour[i-4] - 1][tour[i-5] - 1];	
+		b[1] = dMat[tour[i-5] - 1][tour[i-6] - 1];
+		b[2] = dMat[tour[i-6] - 1][tour[i-7] - 1];
+		b[3] = dMat[tour[i-7 ] - 1][tour[i-8] - 1];
+
+		sumOne = _mm_loadu_si128(a);
+		sumTwo = _mm_loadu_si128(b);
+
+		result = _mm_hadd_epi32(sumOne, sumTwo);
+		distance += _mm_extract_epi32(result,0);
+		distance += _mm_extract_epi32(result,1); 
+		distance += _mm_extract_epi32(result,2);
+		distance += _mm_extract_epi32(result,3);
+
+//		printf("result[0] = %lf" , _mm_extract_epi32(result,0));
+//		printf("distance %lf" , distance);
+	} 
+
+	for ( j = 0 ; j < i ; j++ ) {
+		distance += dMat[tour[j] - 1][tour[j+1] - 1]; }
+	
+	distance += dMat[tour[0] - 1][tour[NUM_CITIES - 1] - 1];
+//	printf("\nDistance SIMD is : %lf" , distance);*/
 	return distance;
 }
 
@@ -163,7 +209,9 @@ void CheckValidity(int *tour, char *text)
 
 void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpringCount , unsigned int **dMat){
 	int i , k;
+	double dadFitness, tourFitness;
 
+	struct timeval globalTime;
 	/* Use two most fittest solution to generate children */
 	int * dad = (int *)malloc(sizeof(int) * NUM_CITIES);
 	int * mom = (int *)malloc(sizeof(int) * NUM_CITIES);
@@ -188,8 +236,7 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 
 		secondPath[i] = (int *)malloc(sizeof(int) * 2);
 		secondPath[i][0] = secondPath[i][1] = -1;
-	}
-	
+	}	
 	/* Make temporary copy of most fit solutions */
 	memcpy(dad , &initialPopulation[startRow * NUM_CITIES] , NUM_CITIES * sizeof(int)) ;
 	memcpy(mom , &initialPopulation[(startRow  + 1 ) * NUM_CITIES] , NUM_CITIES * sizeof(int)) ;	
@@ -197,8 +244,9 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 	CheckValidity(dad , "Dad");
 	CheckValidity(mom , "Mom");
 
-	printf("Dad");		printTour(dad); 	printf("\t");		printf("Fitness : %0.2lf" , computeFitness(dad , dMat));
-	printf("Mom");		printTour(mom);		printf("\t");		printf("Fitness : %0.2lf" , computeFitness(mom , dMat));
+	dadFitness = computeFitness(dad , dMat);
+	printf("Dad");		printTour(dad); 	printf("\t");		gettimeofday(&globalTime, 0);	printf("Dad Fitness : %0.2lf , Global Time %ld  " , dadFitness, globalTime.tv_usec);
+	printf("Mom");		printTour(mom);		printf("\t");		gettimeofday(&globalTime, 0);	printf("Mom Fitness : %0.2lf , Global Time %ld  " , computeFitness(mom , dMat), globalTime.tv_usec);
 
 	/* Special cases */	
 	firstPath[dad[0]][1] = -1;
@@ -284,9 +332,17 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 		
 		/******************************************** Tour Statistics *******************************/
 		CheckValidity(&initialPopulation[(startRow + i) * NUM_CITIES] , "New population Generation");
-		printf("\nTour %d :" , i);		
-		printTour(&initialPopulation[(startRow + i) * NUM_CITIES]);	
-		printf("\tFitness : %0.2lf" , computeFitness(&initialPopulation[(startRow + i) * NUM_CITIES] , dMat));
+		
+		tourFitness = computeFitness(&initialPopulation[(startRow + i) * NUM_CITIES] , dMat);
+		if (tourFitness < dadFitness){
+		//	printf("\nTour %d : " , i);		
+		//	printTour(&initialPopulation[(startRow + i) * NUM_CITIES]);
+		//	gettimeofday( &globalTime, 0 );	
+		//	printf("\n\tFitness : %0.2lf , Global Time Improved Fitness %ld  " , tourFitness, globalTime.tv_usec);
+		}
+		else /* Reject this new tour because it is less fitter than the parent */
+			i--;
+		
 		/********************************************************************************************/
 	}
 	  	
@@ -298,10 +354,15 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 	free(mom);
 }
 
-/*int main(int argc , char ** argv){
+int main(int argc , char ** argv){
 	unsigned int ** dMat	;
 	int * initialPopulation;
 	int i;
+	struct stopwatch_t * timer = NULL;
+	double runTime = 0.0;
+	stopwatch_init();
+	timer = stopwatch_create();	
+
 	dMat = (unsigned int **)malloc(sizeof(unsigned int *) * NUM_CITIES);
         for(i = 0 ; i < NUM_CITIES; i++)
                 dMat[i] = (unsigned int *)malloc(sizeof(unsigned int) * NUM_CITIES);
@@ -310,12 +371,19 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 	readDataFromFile(path , dMat);
 
 	initialPopulation = GenerateInitPopulation(dMat);
+	stopwatch_start(timer);
 
-	improveGlobalPopulation(initialPopulation , 0 , 6 , dMat);	
-	for ( i = 0 ; i < NUM_CITIES*6 ; i++ ) {
+	for(i=0;i<100;i++)
+	computeFitness(initialPopulation , dMat);
+
+	runTime = stopwatch_stop(timer);
+
+	printf("running time is : %lf " , runTime);
+
+//	 improveGlobalPopulation(initialPopulation , 0 , 6 , dMat);	
+/*	for ( i = 0 ; i < NUM_CITIES*6 ; i++ ) {
 		if(i%NUM_CITIES == 0)
 			printf("\n");
 		printf("%d " , initialPopulation[i]);
-		}
-		
-}*/
+	}*/ 
+}

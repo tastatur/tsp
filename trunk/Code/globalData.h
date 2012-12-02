@@ -1,6 +1,6 @@
 #ifndef _GLOBAL_H
 #define _GLOBAL_H
-
+#include <sys/time.h>
 
 /* Global Variables */
 #define NUM_CITIES 48                                 // Number of cities
@@ -17,19 +17,22 @@ void GenerateTour(int initialCity, int* tourPointer, unsigned int** dMat);
 int * GenerateInitPopulation(unsigned int **dMat);
 void improveGlobalPopulation(int *, int, int, unsigned int**);
 double computeFitness(int * , unsigned int **);
+struct timeval globalTime;
+
+//struct stopwatch_t * globalTimer = NULL,
 
 #define numToursUpdated 2
 #define pathString "TSPData.txt"
 #define outPathComputed "TSPComputed.dat"
 #define outPathActual "TSPActual.dat"
 #define numOpenMPthreads_citypaths 10
-#define numMPINodes 10
+#define numMPINodes 2
 #define numOpenMPThreadsPerMPINode 10
 #define numberOfDivisions  4
 #define cudaThreadBlocks = 4
 #define cudaThreadsPerBlock = 16
-#define globalIter 15
-#define localIter 10
+#define globalIter 2
+#define localIter 2
 #define BLOCKSIZE NUM_CITIES //* NUM_CITIES ;  /* threads per block */
 #define NUM_BLOCKS 4;   
 /******** ERROR CODES *********/
