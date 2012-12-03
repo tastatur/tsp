@@ -10,6 +10,7 @@
 *   ith ranked node will handle tours from index tourCountOnNode[i-1]  to tourCountOnNode[i] - 1
 **/
 
+void ProcessRoute(int *, int, int *);
 int * GenerateInitPopulation(unsigned int ** dMat);
 
 void findTourCountForNode(int *tourCountOnNode){

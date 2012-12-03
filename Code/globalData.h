@@ -26,7 +26,7 @@ struct timeval globalTime;
 #define outPathComputed "TSPComputed.dat"
 #define outPathActual "TSPActual.dat"
 #define numOpenMPthreads_citypaths 10
-#define numMPINodes 2
+#define numMPINodes 10
 #define numOpenMPThreadsPerMPINode 10
 #define numberOfDivisions  4
 #define cudaThreadBlocks = 4
