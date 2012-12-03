@@ -242,8 +242,10 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 	CheckValidity(mom , "Mom");
 
 	dadFitness = computeFitness(dad , dMat);
-	printf("Dad");		printTour(dad); 	printf("\t");		gettimeofday(&globalTime, 0);	printf("Dad Fitness : %0.2lf , Global Time %ld  " , dadFitness, globalTime.tv_usec);
-	printf("Mom");		printTour(mom);		printf("\t");		gettimeofday(&globalTime, 0);	printf("Mom Fitness : %0.2lf , Global Time %ld  " , computeFitness(mom , dMat), globalTime.tv_usec);
+//	printf("Dad");		printTour(dad); 	printf("\t");		
+	gettimeofday(&globalTime, 0);	printf("Dad Fitness : %0.2lf , Global Time %ld\n  " , dadFitness, globalTime.tv_usec);
+//	printf("Mom");		printTour(mom);		printf("\t");		
+	gettimeofday(&globalTime, 0);	printf("Mom Fitness : %0.2lf , Global Time %ld\n  " , computeFitness(mom , dMat), globalTime.tv_usec);
 
 	/* Special cases */	
 	firstPath[dad[0]][1] = -1;
@@ -351,7 +353,7 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 	free(mom);
 }
 
-int main(int argc , char ** argv){
+/*int main(int argc , char ** argv){
 	unsigned int ** dMat	;
 	int * initialPopulation;
 	int i;
@@ -378,9 +380,9 @@ int main(int argc , char ** argv){
 	printf("running time is : %lf " , runTime);
 
 //	 improveGlobalPopulation(initialPopulation , 0 , 6 , dMat);	
-/*	for ( i = 0 ; i < NUM_CITIES*6 ; i++ ) {
+	for ( i = 0 ; i < NUM_CITIES*6 ; i++ ) {
 		if(i%NUM_CITIES == 0)
 			printf("\n");
 		printf("%d " , initialPopulation[i]);
-	}*/ 
-}
+	}
+}*/
