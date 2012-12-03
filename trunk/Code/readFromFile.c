@@ -8,7 +8,8 @@
 
 int * readDataFromFile(char *path, unsigned int **TSPData)
 {
-	int city_index = 0, num , i;
+	int city_index = 0,  i;
+	float num;
 	strcpy(path , pathString);
 
 	FILE *fin = fopen(path, "r");
@@ -26,11 +27,12 @@ int * readDataFromFile(char *path, unsigned int **TSPData)
 
         while (fscanf(fin , "%d" , &city_index) != EOF)
         {
-              fscanf(fin , "%d" , &num);
-              TSPData_values[2*(city_index-1)] = num;
+              fscanf(fin , "%f" , &num);
+              TSPData_values[2*(city_index-1)] = (int)num;
 		
-              fscanf(fin , "%d" , &num);
-              TSPData_values[2*city_index-1] = num;
+              fscanf(fin , "%f" , &num);
+              TSPData_values[2*city_index-1] = (int)num;
+	      printf("%d %d\n",city_index, num);
         }
 
         fclose(fin);
@@ -55,8 +57,6 @@ void readActualPath(char *path, int *correctPath1 ,unsigned int **dMat)
                correctPath[k] = num;
 	       k++;
 	}
-	for (i = 0 ; i < NUM_CITIES ; i++)
-		printf("%d\n" , correctPath[i]);
 	printf("Fitness of Actual Path %lf" , computeFitness(correctPath, dMat));
         printf("\n");
 	

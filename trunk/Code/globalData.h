@@ -3,7 +3,7 @@
 #include <sys/time.h>
 
 /* Global Variables */
-#define NUM_CITIES 48                                 // Number of cities
+#define NUM_CITIES 150                                // Number of cities
 #define pathLen 100					//length of path to read file from
 typedef int tour[NUM_CITIES];                         // tour data structure
 typedef float distanceMatrix[NUM_CITIES][NUM_CITIES]; // Matrix holding the distance

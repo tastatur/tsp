@@ -1,6 +1,6 @@
 #include "globalData.h"
 #define MAX_ITERATIONS 20
-
+#define NUM_THREADS 32
 const unsigned int NUM_BLOCKS_CUDA = 4;
 const unsigned int BLOCKSIZE_CUDA = NUM_CITIES*NUM_CITIES;
 
