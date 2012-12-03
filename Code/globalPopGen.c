@@ -111,7 +111,7 @@ void printTour(int *t)
   	printf("%d-", t[i]);
 }
 
-void showBackTrace() 
+/* void showBackTrace() 
 { 
   const int maxbtsize = 50; 
   int btsize;
@@ -128,7 +128,7 @@ void showBackTrace()
   }
 
   free(strs);  
-}
+}*/
 
 void GenerateTour(int initialCity, int* tourPointer, unsigned int** dMat)
 {
@@ -188,7 +188,6 @@ void CheckValidity(int *tour, char *text)
     {
       printf("ERROR:Invalid path generated:<%s>,city %d repeated\n" ,text, tour[i] );
       printTour(tour);
-      showBackTrace();
       exit(0);
     }
     visited[tour[i]] = 1;
@@ -200,7 +199,6 @@ void CheckValidity(int *tour, char *text)
     {
       printf("ERROR:Invalid path generated:<%s>, city %d not present\n", text, i);
       printTour(tour);
-      showBackTrace();
       exit(0);
     }
   } 
