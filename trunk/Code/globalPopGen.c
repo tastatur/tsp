@@ -17,7 +17,6 @@ double computeFitness(int * , unsigned int **);
 double computeFitness(int *tour , unsigned int ** dMat){
 	int i,j;
 	double distance = 0.0;
-//        CheckValidity(tour , "computefitness");
 	
 	for (i = 0 ; i < NUM_CITIES - 1 ; i++){
 		distance += dMat[tour[i] - 1][tour[i+1] - 1];
@@ -25,10 +24,9 @@ double computeFitness(int *tour , unsigned int ** dMat){
 	distance += dMat[tour[0] - 1][tour[NUM_CITIES - 1] - 1];
 
 //	printf("\nDistance sequential is : %lf" , distance);
-//	return distance;
 
-/*
-	int a[4] , b[4];
+	/* Below code uses SIMD instructions to compute tour fitness which we use for experiments. However due to random acess to dMat matrix the performance deteriorates and we do not use it in system evaluation */
+	/* int a[4] , b[4];
 	__m128i sumOne;
 	__m128i sumTwo;
 	__m128i result;
@@ -60,15 +58,16 @@ double computeFitness(int *tour , unsigned int ** dMat){
 		distance += _mm_extract_epi32(result,2);
 		distance += _mm_extract_epi32(result,3);
 
-//		printf("result[0] = %lf" , _mm_extract_epi32(result,0));
-//		printf("distance %lf" , distance);
+		printf("result[0] = %lf" , _mm_extract_epi32(result,0));
+		printf("distance %lf" , distance);
 	} 
 
 	for ( j = 0 ; j < i ; j++ ) {
 		distance += dMat[tour[j] - 1][tour[j+1] - 1]; }
 	
 	distance += dMat[tour[0] - 1][tour[NUM_CITIES - 1] - 1];
-//	printf("\nDistance SIMD is : %lf" , distance);*/
+	printf("\nDistance SIMD is : %lf" , distance); */
+	/* ************************************* SIMD Intrinsics End ****************************************/
 	return distance;
 }
 
