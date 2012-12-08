@@ -115,6 +115,7 @@ int main(int argc , char **argv)
 			printf("\n\n\nLatency/Wait time for Node 0  : %Lg", commTime );
 			
 			/* Now improve these tours n parallel to generate a global population of improved tours */
+			if(gIter < globalIter - 1) {
 			stopwatch_start(timer);
 			# pragma omp parallel default (shared) private(rowPerProc , startRow) shared(i, size, tourCountOnNode, initialPopulation) num_threads(size - 1)
 			{ 
@@ -128,6 +129,7 @@ int main(int argc , char **argv)
 			} /* End of parallel region */
 			commTime = stopwatch_stop(timer);
 			printf("\n\n\nTime to improve global population by Node 0 : %Lg" , commTime);
+			}
 		}
 
 		/************************************************************************************************************/		
@@ -136,7 +138,8 @@ int main(int argc , char **argv)
 
 		/* At last we have the most optimized tour */
 	  	readActualPath(path, NULL, dMat); 
-  		//resultVerification(TSPData_coordinates);
+		printBestPath (initialPopulation, dMat, tourCountOnNode);
+  		//resultVerification(initialPopulation,dMat,tourCountOnNode);
 	}
 	else{
 		rowPerProc = ( rank == 1) ? tourCountOnNode[0] : (tourCountOnNode[rank - 1] - tourCountOnNode[rank - 2]);
@@ -163,7 +166,7 @@ int main(int argc , char **argv)
 			MPI_Waitall(1 , &reqStatus , &status);
 		}
 		gCommTime = stopwatch_stop(gTimer);
-		printf("\n\n\nTime for global population improvement by Node %d : %Lg", gCommTime);
+		printf("\n\n\nTime for global population improvement by Node %d : %Lg\n\n", rank, gCommTime);
 		/************************************************************************************************************/		
 	}
 
