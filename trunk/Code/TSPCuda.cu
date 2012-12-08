@@ -96,7 +96,9 @@ void TSPSwapKernel(unsigned int n, int* completeTour, int* coords, unsigned int 
   }  
   fitnessMatrix[tidx][tidy] = (float)INT_MAX;
 
-  while ( counter != MAX_ITERATIONS )
+  //MAX_ITERATIONS = loops ;
+
+  while ( counter != loops )
   {  
     //improvement = 0;
     swapCities[0] = 0;
