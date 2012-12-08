@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 
 int * readDataFromFile(char *path, unsigned int **TSPData)
@@ -43,7 +44,7 @@ int * readDataFromFile(char *path, unsigned int **TSPData)
 void readActualPath(char *path, int *correctPath1 ,unsigned int **dMat)
 {
  	int *correctPath = (int*)malloc(sizeof(int)*NUM_CITIES);
-        FILE *fin = fopen("OPTTSP48", "r");
+        FILE *fin = fopen(OPTPATH, "r");
 	int k = 0,i , num;
 
         if (fin == NULL)
@@ -57,11 +58,47 @@ void readActualPath(char *path, int *correctPath1 ,unsigned int **dMat)
                correctPath[k] = num;
 	       k++;
 	}
-	printf("Fitness of Actual Path %lf" , computeFitness(correctPath, dMat));
+	printf("\nDistance of Most Optimized Tour %lf" , computeFitness(correctPath, dMat));
+	printTour(correctPath);
         printf("\n");
 	
 	fclose(fin);
 }
+
+void printBestPath(int *population,unsigned int **dMat , int *tourCountOnNode ) {
+
+        int nextIndex = 0 , numberOfTours = 0, minDistance = INT_MAX , indexOfBestPath ;
+
+
+        for(int i=0 ; i < numMPINodes - 1 ; i++) {
+		if( i > 0)
+			numberOfTours = tourCountOnNode[i] - tourCountOnNode[i-1];
+		else
+			numberOfTours = tourCountOnNode[i];
+
+                for ( int j = 0 ; j < numberOfTours ; j++ )
+                {
+                        int distance = computeFitness(population + nextIndex + (NUM_CITIES*j), dMat) ;
+                        if(distance < minDistance)
+                          {
+                                minDistance = distance;
+                                indexOfBestPath = nextIndex + NUM_CITIES*j;
+                          }
+                }
+                nextIndex += numberOfTours*NUM_CITIES;
+        }
+
+    
+	printf("\nBest Tour ");
+     /*   for( int i = indexOfBestPath ; i < indexOfBestPath + NUM_CITIES ; i++ ) {
+                printf(" %d->" , population[i]);
+        }*/
+	printTour(population + indexOfBestPath);
+
+        printf("\nDistance of Generated Best Tour %d " , minDistance);
+
+}
+
 
 void make2DArray(unsigned int **TSPData , int *TSPData_values)
 {
