@@ -334,13 +334,15 @@ void improveGlobalPopulation(int * initialPopulation , int startRow , int offSpr
 		
 		tourFitness = computeFitness(&initialPopulation[(startRow + i) * NUM_CITIES] , dMat);
 		if (tourFitness < dadFitness){
-		//	printf("\nTour %d : " , i);		
-		//	printTour(&initialPopulation[(startRow + i) * NUM_CITIES]);
-		//	gettimeofday( &globalTime, 0 );	
-		//	printf("\n\tFitness : %0.2lf , Global Time Improved Fitness %ld  " , tourFitness, globalTime.tv_usec);
+			memcpy(&initialPopulation[(startRow + i) * NUM_CITIES] , dad , NUM_CITIES * sizeof(int));
+			//printf("\nTour %d : " , i);		
+			//tourFitness = computeFitness(&initialPopulation[(startRow + i) * NUM_CITIES] , dMat);
+//			printTour(&initialPopulation[(startRow + i) * NUM_CITIES]);
+			//gettimeofday( &globalTime, 0 );	
+			//printf("\n\tFitness : %0.2lf , Global Time Improved Fitness %ld  " , tourFitness, globalTime.tv_usec);
 		}
-		else /* Reject this new tour because it is less fitter than the parent */
-			i--;
+		//else /* Reject this new tour because it is less fitter than the parent */
+		//	i--;
 		
 		/********************************************************************************************/
 	}
